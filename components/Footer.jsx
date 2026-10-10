@@ -16,10 +16,31 @@ export default function Footer() {
           <p>Facebook &middot; Twitter &middot; Instagram &middot; LinkedIn</p>
         </div>
       </div>
-      <div className="map"><h3>Find Us</h3>
-        <a href="https://www.google.com/maps/search/?api=1&query=AWH+Engineering+College+Kuttikkattoor+Kozhikode" target="_blank" rel="noopener noreferrer">
-          AWH Engineering College<br /><small style={{ fontWeight: 400 }}>Kuttikkattoor, Kozhikode, Kerala 673008 &mdash; tap to open in Google Maps</small>
-        </a>
+      <div className="map">
+        <h3>Find Us</h3>
+        <div className="map-wrap">
+          <iframe
+            src="https://maps.google.com/maps?q=AWH+Engineering+College,+Kuttikkattoor,+Kozhikode&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            title="AWH Engineering College Location Map"
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+          <div className="map-info">
+            <div>
+              <strong>AWH Engineering College</strong>
+              <span>Kuttikkattoor, Kozhikode, Kerala 673008</span>
+            </div>
+            <a
+              href="https://maps.app.goo.gl/PRoVyUYud4p82Gq49"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="map-btn"
+            >
+              Open in Google Maps &rarr;
+            </a>
+          </div>
+        </div>
       </div>
       <p className="copy">&copy; {FEST.year} Saaya. Designed &amp; Developed by <b>Team Shinobi</b>. All Rights Reserved.</p>
     </footer>

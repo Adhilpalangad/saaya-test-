@@ -24,6 +24,14 @@ export default function MainEvents() {
           ))}
         </div>
         <div className="spot" style={{ '--g': m[2] }}>
+          {m[4] && (
+            <div
+              className="spot-bg"
+              key={'img' + cur}
+              style={{ backgroundImage: `url("${encodeURI(m[4])}")` }}
+              aria-hidden="true"
+            />
+          )}
           <i className="pg" key={'p' + cur} />
           <div className="sp swap" key={cur}>
             <span className="big">0{cur + 1}</span><small>{m[3] || 'Main Event'}</small><h3>{m[0]}</h3>
