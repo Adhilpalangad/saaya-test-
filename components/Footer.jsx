@@ -40,7 +40,16 @@ export default function Footer() {
             Phone: <a href="tel:04952358747" style={{ color: 'var(--text)' }}>0495 2358747</a><br />
             Sponsorship: +91 96339 05787 &middot; +91 884-8405031 &middot; +91 85908 64665</p>
           <p>
-            Facebook &middot; Twitter &middot;{' '}
+            <a
+              href="https://www.facebook.com/awhupdates/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--accent2)', fontWeight: 600, textDecoration: 'none' }}
+              title="AWH Engineering College on Facebook"
+            >
+              Facebook
+            </a>{' '}
+            &middot; Twitter &middot;{' '}
             <a
               href="https://www.instagram.com/awh_engineeringcollege?utm_source=ig_web_button_share_sheet&exln=ZDNlZDc0MzIxNw=="
               target="_blank"
@@ -54,7 +63,9 @@ export default function Footer() {
           </p>
         </div>
       </div>
-      <p className="copy">&copy; 2026 Saaya. Designed &amp; Developed by <b>Team DEV</b>. All Rights Reserved.</p>
+      <div className="copy-wrap">
+        <p className="copy">&copy; 2026 Saaya. Designed &amp; Developed by <b>Team DEV</b>. All Rights Reserved.</p>
+      </div>
     </footer>
   );
 }
