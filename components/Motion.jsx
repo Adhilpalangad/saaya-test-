@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 export default function Motion() {
   const path = usePathname();
   useEffect(() => {
-    const T = document.querySelectorAll('section>h2,.ev,.row,#about h3,#about p,#about .btn,.mx,.fg>div,.map,.copy');
+    const T = document.querySelectorAll('section>h2,.ev,.row,#about h3,#about p,#about .btn,.mx,.fg>div,.map');
     T.forEach((el) => {
       if (el.classList.contains('rv')) return;
       el.classList.add('rv');
@@ -25,7 +25,7 @@ export default function Motion() {
       el.classList.add('in');
       if (el.classList.contains('row')) count(el);
       setTimeout(() => { el.style.setProperty('--d', '0s'); el.classList.add('done'); }, 1700);
-    }), { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    }), { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
     document.querySelectorAll('.rv:not(.in),.abr:not(.in)').forEach((el) => io.observe(el));
 
     const bar = document.getElementById('bar'), nav = document.querySelector('nav'), art = document.querySelector('.art');

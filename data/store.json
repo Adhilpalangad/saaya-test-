@@ -1064,5 +1064,11 @@
     "Stark": 120,
     "Lannister": 117
   },
-  "isManualLeaderboard": false
+  "isManualLeaderboard": false,
+  "curtain": {
+    "enabled": false,
+    "headline": "SAAYA 2026",
+    "tagline": "AWH Engineering College · The Grand Arts Fiesta",
+    "buttonText": "✨ Launch Saaya '26"
+  }
 }
