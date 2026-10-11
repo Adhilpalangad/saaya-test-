@@ -19,6 +19,19 @@ export default function ResultsPage() {
     return () => cancelAnimationFrame(id);
   }, []);
 
+  if (!rows.length && !data?.isManual) {
+    return (
+      <div id="respage">
+        <div className="rw">
+          <h1>Hall of Fame</h1>
+          <p className="rs">CELEBRATING EXCELLENCE</p>
+          {error && <p role="status">{error}</p>}
+          <p className="rempty" role="status">{!data && !error ? 'Loading results...' : 'No data available.'}</p>
+        </div>
+      </div>
+    );
+  }
+
   const max = Math.max(...Object.values(pts), 1);
   const s = q.trim().toLowerCase();
   const ok = (p) => (!sq || p.q === sq) && (!sem || String(p.s) === sem);
@@ -95,7 +108,7 @@ export default function ResultsPage() {
                   </div>];
               })}
             </>
-          ) : <p className="rempty">{!data && !error ? 'Loading results...' : rows.length ? 'No results match your search.' : 'Results have not been published yet.'}</p>}
+          ) : <p className="rempty">{rows.length ? 'No results match your search.' : 'No data available.'}</p>}
         </div>
       </div>
     </div>

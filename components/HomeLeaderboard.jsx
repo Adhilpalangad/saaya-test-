@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { FEST, SQ, SQN } from '../lib/data';
+import { FEST } from '../lib/data';
 
 import { usePublicData } from '../lib/use-public-data';
 
 export default function HomeLeaderboard() {
   const { data, error } = usePublicData('/api/results');
-  const board = data?.board || SQN.map(n => [n, SQ[n].d.join(', '), 0]);
+  const hasStandings = data && (data.isManual || data.results?.length > 0);
+  const board = hasStandings ? data.board || [] : [];
 
   return (
     <section id="results">
@@ -15,6 +15,7 @@ export default function HomeLeaderboard() {
       </h2>
       {error && <p role="status">{error}</p>}
       <div className="lb" id="lb">
+        {!board.length && <p className="rempty" role="status">{!data && !error ? 'Loading leaderboard...' : 'No data available.'}</p>}
         {board.map(([name, depts, pts], i) => (
           <div className="row" key={name}>
             <div style={{ display: 'flex', alignItems: 'center' }}>

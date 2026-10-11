@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { EV, DAYS, FEST } from '../lib/data';
 import { usePublicData } from '../lib/use-public-data';
 
@@ -32,7 +32,7 @@ export default function EventsPage() {
   });
 
   // Filter events by tab and search
-  const rawList = EV[cur] || [];
+  const rawList = (EV[cur] || []).filter(e => Object.hasOwn(statuses, e[0]));
   const s = search.trim().toLowerCase();
   const list = rawList.filter((e) => !s || e[0].toLowerCase().includes(s) || (e[3] || '').toLowerCase().includes(s));
 
@@ -136,7 +136,7 @@ export default function EventsPage() {
               );
             })
           ) : (
-            <p className="evempty">No events matching your search.</p>
+            <p className="evempty" role="status">{!data && !error ? 'Loading events...' : rawList.length ? 'No events matching your search.' : 'No data available.'}</p>
           )}
         </div>
       </div>

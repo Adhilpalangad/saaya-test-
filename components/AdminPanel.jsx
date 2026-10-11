@@ -541,6 +541,7 @@ export default function AdminPanel() {
           </form>
 
           <h3 style={{ marginTop: 36, marginBottom: 16 }}>Current Gallery Photos ({gallery.length})</h3>
+          {!gallery.length && <p role="status">No data available.</p>}
           <div className="adm-gal-grid">
             {gallery.map((g) => (
               <div key={g.id || g.src} className="adm-gal-card">

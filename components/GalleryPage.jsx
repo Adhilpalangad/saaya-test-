@@ -49,7 +49,7 @@ export default function GalleryPage() {
           <p>A visual journey through the years. Witness the creativity, energy, and spirit of AWH Engineering College.</p>
           <h2>Previous Editions</h2>
           {error && <p role="status">{error}</p>}
-          {!items.length && <p>{!data && !error ? 'Loading photos...' : 'No photos have been published yet.'}</p>}
+          {!vis.length && <p role="status">{!data && !error ? 'Loading photos...' : items.length ? 'No photos available for this year.' : 'No data available.'}</p>}
           <div className="gch" id="gch">
             {years.map((y) => (
               <button
