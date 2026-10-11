@@ -2,19 +2,33 @@
 import { useEffect, useState } from 'react';
 import { ROWS, POINTS, SQ, SQN, MED, EV } from '../lib/data';
 
-const max = Math.max(...Object.values(POINTS), 1);
-
 export default function ResultsPage() {
+  const [pts, setPts] = useState(POINTS);
+  const [rows, setRows] = useState(ROWS);
   const [q, setQ] = useState('');
   const [type, setType] = useState('');
   const [sq, setSq] = useState('');
   const [sem, setSem] = useState('');
   const [on, setOn] = useState(false);
-  useEffect(() => { const id = requestAnimationFrame(() => setOn(true)); return () => cancelAnimationFrame(id); }, []);
 
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setOn(true));
+    fetch('/api/results')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.points) setPts(data.points);
+        if (data.results && Array.isArray(data.results) && data.results.length) {
+          setRows(data.results);
+        }
+      })
+      .catch((err) => console.error('Error fetching live results:', err));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const max = Math.max(...Object.values(pts), 1);
   const s = q.trim().toLowerCase();
   const ok = (p) => (!sq || p.q === sq) && (!sem || String(p.s) === sem);
-  const list = ROWS.filter((r) =>
+  const list = rows.filter((r) =>
     (!type || r.t === type) &&
     (!s || r.n.toLowerCase().includes(s) || r.p.some((p) => (p.n + ' ' + p.d + ' ' + p.q).toLowerCase().includes(s))) &&
     ((!sq && !sem) || r.p.some(ok)));
@@ -45,8 +59,8 @@ export default function ResultsPage() {
                 <small>SQUAD</small>
                 <h3>{n}</h3>
                 <p>{s.d.join(' \u00b7 ')}</p>
-                <b>{POINTS[n]}<em>PTS</em></b>
-                <i style={{ width: on ? (POINTS[n] / max) * 100 + '%' : 0 }} />
+                <b>{pts[n] || 0}<em>PTS</em></b>
+                <i style={{ width: on ? (((pts[n] || 0) / max) * 100) + '%' : 0 }} />
               </button>
             );
           })}
@@ -63,10 +77,10 @@ export default function ResultsPage() {
             <option value="">Squad</option>{SQN.map((n) => <option key={n} value={n}>{n} ({SQ[n].d.join(', ')})</option>)}
           </select>
           <select aria-label="Semester" value={sem} onChange={(e) => setSem(e.target.value)}>
-            <option value="">Semester</option>{[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <option key={i} value={i}>S{i}</option>)}
+            <option value="">Semester</option>{[1, 2, 3, 4, 5, 6, 7].map((i) => <option key={i} value={i}>S{i}</option>)}
           </select>
         </div>
-        <div className="rcount" id="rcount">{list.length} of {ROWS.length} events</div>
+        <div className="rcount" id="rcount">{list.length} of {rows.length} events</div>
         <div id="rtab">
           {list.length ? (
             <>

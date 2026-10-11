@@ -14,7 +14,7 @@ export default function AboutPage() {
         <header className="abh">
           <small className="abr">AWH ENGINEERING COLLEGE &middot; ARTS FEST</small>
           <h1 className="abr">Where Creativity<br /><em>Knows No Bounds</em></h1>
-          <p className="abr">Saaya is the vibrant cultural fest of AWH Engineering College, a two-day celebration of art, music, and creativity. Scheduled for <b>October 23-24, 2026</b>, this fest brings together talented students from diverse backgrounds to showcase their talents. With a perfect blend of music, dance, drama, and fine arts, Saaya is more than just a festival &mdash; it&rsquo;s a platform for innovation, self-expression, and unforgettable memories.</p>
+          <p className="abr">Saaya is the vibrant cultural fest of AWH Engineering College, a two-day celebration of art, music, and creativity. Scheduled for <b>February 5-6, 2026</b>, this fest brings together talented students from diverse backgrounds to showcase their talents. With a perfect blend of music, dance, drama, and fine arts, Saaya is more than just a festival &mdash; it&rsquo;s a platform for innovation, self-expression, and unforgettable memories.</p>
           <Link className="btn abr" href="/events">Explore Events &rarr;</Link>
           <div className="abs abr">
             {[['2', 'Days'], [EVENT_COUNT, 'Events'], ['3', 'Squads'], [ED.length, 'Editions']].map(([v, l]) => <div key={l}><b>{v}</b><span>{l}</span></div>)}
@@ -57,26 +57,28 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="abx2">
-          <h2 className="abr">Coordination Team</h2>
-          <div id="abtm">
-            {TEAM.map(([group, people]) => (
-              <div className="tg0" key={group}>
-                <h3>{group}</h3>
-                <div className="tm">
-                  {people.map(([name, dept]) => {
-                    const c = COL[k++ % COL.length];
-                    return (
-                      <div className="pc abr" key={group + name} style={{ '--a': c[0], '--b': c[1] }}>
-                        <div className="av">{ini(name)}</div><h4>{name}</h4><p>{dept}</p>
-                      </div>
-                    );
-                  })}
+        {TEAM && TEAM.length > 0 && (
+          <section className="abx2">
+            <h2 className="abr">Coordination Team</h2>
+            <div id="abtm">
+              {TEAM.map(([group, people]) => (
+                <div className="tg0" key={group}>
+                  <h3>{group}</h3>
+                  <div className="tm">
+                    {people.map(([name, dept]) => {
+                      const c = COL[k++ % COL.length];
+                      return (
+                        <div className="pc abr" key={group + name} style={{ '--a': c[0], '--b': c[1] }}>
+                          <div className="av">{ini(name)}</div><h4>{name}</h4><p>{dept}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

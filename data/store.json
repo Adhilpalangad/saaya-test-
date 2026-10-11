@@ -1,0 +1,1068 @@
+{
+  "adminPass": "saaya2026",
+  "eventStatuses": {
+    "Thiruvathirakali": "upcoming",
+    "Solo Dance Boys": "upcoming",
+    "Video Choreography Boys": "upcoming"
+  },
+  "gallery": [
+    {
+      "id": "gal_1",
+      "y": 2025,
+      "src": "",
+      "cap": "Saaya 2025 · Photo 1"
+    },
+    {
+      "id": "gal_2",
+      "y": 2024,
+      "src": "",
+      "cap": "Saaya 2024 · Photo 2"
+    },
+    {
+      "id": "gal_3",
+      "y": 2023,
+      "src": "",
+      "cap": "Saaya 2023 · Photo 3"
+    },
+    {
+      "id": "gal_4",
+      "y": 2025,
+      "src": "",
+      "cap": "Saaya 2025 · Photo 4"
+    },
+    {
+      "id": "gal_5",
+      "y": 2024,
+      "src": "",
+      "cap": "Saaya 2024 · Photo 5"
+    },
+    {
+      "id": "gal_6",
+      "y": 2023,
+      "src": "",
+      "cap": "Saaya 2023 · Photo 6"
+    },
+    {
+      "id": "gal_7",
+      "y": 2025,
+      "src": "",
+      "cap": "Saaya 2025 · Photo 7"
+    },
+    {
+      "id": "gal_8",
+      "y": 2024,
+      "src": "",
+      "cap": "Saaya 2024 · Photo 8"
+    },
+    {
+      "id": "gal_9",
+      "y": 2023,
+      "src": "",
+      "cap": "Saaya 2023 · Photo 9"
+    },
+    {
+      "id": "gal_10",
+      "y": 2025,
+      "src": "",
+      "cap": "Saaya 2025 · Photo 10"
+    },
+    {
+      "id": "gal_11",
+      "y": 2024,
+      "src": "",
+      "cap": "Saaya 2024 · Photo 11"
+    },
+    {
+      "id": "gal_12",
+      "y": 2023,
+      "src": "",
+      "cap": "Saaya 2023 · Photo 12"
+    },
+    {
+      "id": "gal_13",
+      "y": 2025,
+      "src": "",
+      "cap": "Saaya 2025 · Photo 13"
+    },
+    {
+      "id": "gal_14",
+      "y": 2024,
+      "src": "",
+      "cap": "Saaya 2024 · Photo 14"
+    },
+    {
+      "id": "gal_15",
+      "y": 2023,
+      "src": "",
+      "cap": "Saaya 2023 · Photo 15"
+    }
+  ],
+  "results": [
+    {
+      "t": "On Stage",
+      "n": "Thiruvathirakali",
+      "p": [
+        {
+          "n": "Student 01",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 02",
+          "s": 2,
+          "d": "EEE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 03",
+          "s": 7,
+          "d": "AD",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Solo Dance Boys",
+      "p": [
+        {
+          "n": "Student 04",
+          "s": 1,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 05",
+          "s": 6,
+          "d": "AD",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 06",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Spot Dance",
+      "p": [
+        {
+          "n": "Student 07",
+          "s": 5,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 08",
+          "s": 3,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 09",
+          "s": 1,
+          "d": "EEE",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Mime",
+      "p": [
+        {
+          "n": "Student 10",
+          "s": 2,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 11",
+          "s": 7,
+          "d": "EEE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 12",
+          "s": 5,
+          "d": "AD",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Video Choreography Boys",
+      "p": [
+        {
+          "n": "Student 13",
+          "s": 6,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 14",
+          "s": 4,
+          "d": "AD",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 15",
+          "s": 2,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Solo Dance Girls",
+      "p": [
+        {
+          "n": "Student 16",
+          "s": 3,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 17",
+          "s": 1,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 18",
+          "s": 6,
+          "d": "EEE",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Kolkali",
+      "p": [
+        {
+          "n": "Student 19",
+          "s": 7,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 20",
+          "s": 5,
+          "d": "EEE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 21",
+          "s": 3,
+          "d": "AD",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Synchronisation Dance Girls",
+      "p": [
+        {
+          "n": "Student 22",
+          "s": 4,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 23",
+          "s": 2,
+          "d": "AD",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 24",
+          "s": 7,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Synchronisation Dance Boys",
+      "p": [
+        {
+          "n": "Student 25",
+          "s": 1,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 26",
+          "s": 6,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 27",
+          "s": 4,
+          "d": "EEE",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Vattapattu",
+      "p": [
+        {
+          "n": "Student 28",
+          "s": 5,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 29",
+          "s": 3,
+          "d": "EEE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 30",
+          "s": 1,
+          "d": "AD",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Oppana",
+      "p": [
+        {
+          "n": "Student 31",
+          "s": 2,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 32",
+          "s": 7,
+          "d": "AD",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 33",
+          "s": 5,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Video Choreography Girls",
+      "p": [
+        {
+          "n": "Student 34",
+          "s": 6,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 35",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 36",
+          "s": 2,
+          "d": "EEE",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Duffmuttu",
+      "p": [
+        {
+          "n": "Student 37",
+          "s": 3,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 38",
+          "s": 1,
+          "d": "EEE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 39",
+          "s": 6,
+          "d": "AD",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "On Stage",
+      "n": "Karaoke",
+      "p": [
+        {
+          "n": "Student 40",
+          "s": 7,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 41",
+          "s": 5,
+          "d": "AD",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 42",
+          "s": 3,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Spot Photography",
+      "p": [
+        {
+          "n": "Student 43",
+          "s": 7,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 44",
+          "s": 5,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 45",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Poem Writing English",
+      "p": [
+        {
+          "n": "Student 46",
+          "s": 4,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 47",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 48",
+          "s": 7,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Poem Writing Malayalam",
+      "p": [
+        {
+          "n": "Student 49",
+          "s": 1,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 50",
+          "s": 6,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 51",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Poem Writing Hindi",
+      "p": [
+        {
+          "n": "Student 52",
+          "s": 5,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 53",
+          "s": 3,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 54",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Pencil Drawing",
+      "p": [
+        {
+          "n": "Student 55",
+          "s": 2,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 56",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 57",
+          "s": 5,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Story Writing English",
+      "p": [
+        {
+          "n": "Student 58",
+          "s": 6,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 59",
+          "s": 4,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 60",
+          "s": 2,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Story Writing Malayalam",
+      "p": [
+        {
+          "n": "Student 61",
+          "s": 3,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 62",
+          "s": 1,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 63",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Story Writing Hindi",
+      "p": [
+        {
+          "n": "Student 64",
+          "s": 7,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 65",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 66",
+          "s": 3,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Cartoon Drawing",
+      "p": [
+        {
+          "n": "Student 67",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 68",
+          "s": 2,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 69",
+          "s": 7,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Mehandi",
+      "p": [
+        {
+          "n": "Student 70",
+          "s": 1,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 71",
+          "s": 6,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 72",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Off Stage",
+      "n": "Nail Art",
+      "p": [
+        {
+          "n": "Student 73",
+          "s": 5,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 74",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 75",
+          "s": 1,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Instruments",
+      "p": [
+        {
+          "n": "Student 76",
+          "s": 7,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 77",
+          "s": 5,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 78",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Mimicry",
+      "p": [
+        {
+          "n": "Student 79",
+          "s": 4,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 80",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 81",
+          "s": 7,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Mono Act",
+      "p": [
+        {
+          "n": "Student 82",
+          "s": 1,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 83",
+          "s": 6,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 84",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Light Music",
+      "p": [
+        {
+          "n": "Student 85",
+          "s": 5,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 86",
+          "s": 3,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 87",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Rap (English, Malayalam)",
+      "p": [
+        {
+          "n": "Student 88",
+          "s": 2,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 89",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 90",
+          "s": 5,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Mappila Paatu",
+      "p": [
+        {
+          "n": "Student 91",
+          "s": 6,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 92",
+          "s": 4,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 93",
+          "s": 2,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Patriotic Song",
+      "p": [
+        {
+          "n": "Student 94",
+          "s": 3,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 95",
+          "s": 1,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 96",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Poem Recitation English",
+      "p": [
+        {
+          "n": "Student 97",
+          "s": 7,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 98",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 99",
+          "s": 3,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Poem Recitation Malayalam",
+      "p": [
+        {
+          "n": "Student 100",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 101",
+          "s": 2,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 102",
+          "s": 7,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Poem Recitation Hindi",
+      "p": [
+        {
+          "n": "Student 103",
+          "s": 1,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 104",
+          "s": 6,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 105",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Classical Music",
+      "p": [
+        {
+          "n": "Student 106",
+          "s": 5,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 107",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 108",
+          "s": 1,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Nadan Pattu",
+      "p": [
+        {
+          "n": "Student 109",
+          "s": 2,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 110",
+          "s": 7,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 111",
+          "s": 5,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Elocution English",
+      "p": [
+        {
+          "n": "Student 112",
+          "s": 6,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 113",
+          "s": 4,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 114",
+          "s": 2,
+          "d": "MCA",
+          "q": "Stark"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Elocution Malayalam",
+      "p": [
+        {
+          "n": "Student 115",
+          "s": 3,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 116",
+          "s": 1,
+          "d": "MCA",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 117",
+          "s": 6,
+          "d": "ME",
+          "q": "Targaryen"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Group Song Western",
+      "p": [
+        {
+          "n": "Student 118",
+          "s": 7,
+          "d": "CSE",
+          "q": "Lannister"
+        },
+        {
+          "n": "Student 119",
+          "s": 5,
+          "d": "ME",
+          "q": "Targaryen"
+        },
+        {
+          "n": "Student 120",
+          "s": 3,
+          "d": "CSE",
+          "q": "Lannister"
+        }
+      ]
+    }
+  ],
+  "manualPoints": {
+    "Targaryen": 123,
+    "Stark": 120,
+    "Lannister": 117
+  },
+  "isManualLeaderboard": false
+}
