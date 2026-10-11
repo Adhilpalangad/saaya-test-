@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { EV, DAYS, FEST } from '../lib/data';
+import { usePublicData } from '../lib/use-public-data';
 
 const Ic = ({ d }) => <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">{d}</svg>;
 const cal = <Ic d={<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>} />;
@@ -10,33 +11,9 @@ const go = <Ic d={<path d="M5 12h14M13 6l6 6-6 6" />} />;
 
 export default function EventsPage() {
   const [cur, setCur] = useState('On Stage');
-  const [statuses, setStatuses] = useState({ Thiruvathirakali: 'live' });
+  const { data, error } = usePublicData('/api/events');
+  const statuses = data?.eventStatuses || {};
   const [search, setSearch] = useState('');
-
-  // Poll for live event updates from admin every 3 seconds
-  useEffect(() => {
-    let active = true;
-    const fetchStatuses = async () => {
-      try {
-        const res = await fetch('/api/events');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.eventStatuses && active) {
-            setStatuses(data.eventStatuses);
-          }
-        }
-      } catch (err) {
-        // Fallback silently
-      }
-    };
-
-    fetchStatuses();
-    const interval = setInterval(fetchStatuses, 3000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
 
   // Find all currently live events across all categories
   const liveEvents = [];
@@ -64,6 +41,7 @@ export default function EventsPage() {
       <div className="evw">
         <h1>Events</h1>
         <p id="evsub">Discover the rhythm of Saaya {FEST.year}</p>
+        {error && <p role="status">{error}</p>}
 
         {/* LIVE NOW Showcase Banner (displays automatically when admin sets an event to Live) */}
         {liveEvents.length > 0 && (

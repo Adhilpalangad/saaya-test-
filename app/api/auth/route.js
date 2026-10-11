@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getStore } from '../../../lib/store';
+import { requireAdmin, failure } from '../../../lib/api';
 
-export async function POST(req) {
-  try {
-    const { pass } = await req.json();
-    const store = getStore();
+export const dynamic = 'force-dynamic';
 
-    if (pass === store.adminPass) {
-      return NextResponse.json({ success: true, token: 'saaya_admin_auth_valid' });
-    }
-    return NextResponse.json({ success: false, error: 'Incorrect passcode' }, { status: 401 });
-  } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
-  }
+export async function GET(req) {
+  try { await requireAdmin(req); return NextResponse.json({ success: true }); }
+  catch (error) { return failure(error); }
 }

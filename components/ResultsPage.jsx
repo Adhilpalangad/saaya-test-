@@ -1,10 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ROWS, POINTS, SQ, SQN, MED, EV } from '../lib/data';
+import { SQ, SQN, MED, EV } from '../lib/data';
+
+import { usePublicData } from '../lib/use-public-data';
 
 export default function ResultsPage() {
-  const [pts, setPts] = useState(POINTS);
-  const [rows, setRows] = useState(ROWS);
+  const { data, error } = usePublicData('/api/results');
+  const pts = data?.points || Object.fromEntries(SQN.map(n => [n, 0]));
+  const rows = data?.results || [];
   const [q, setQ] = useState('');
   const [type, setType] = useState('');
   const [sq, setSq] = useState('');
@@ -13,15 +16,6 @@ export default function ResultsPage() {
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setOn(true));
-    fetch('/api/results')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.points) setPts(data.points);
-        if (data.results && Array.isArray(data.results) && data.results.length) {
-          setRows(data.results);
-        }
-      })
-      .catch((err) => console.error('Error fetching live results:', err));
     return () => cancelAnimationFrame(id);
   }, []);
 
@@ -39,6 +33,7 @@ export default function ResultsPage() {
       <div className="rw">
         <h1>Hall of Fame</h1>
         <p className="rs">CELEBRATING EXCELLENCE</p>
+        {error && <p role="status">{error}</p>}
         <div className="sqs" id="sqs">
           {SQN.map((n) => {
             const s = SQ[n];
@@ -100,7 +95,7 @@ export default function ResultsPage() {
                   </div>];
               })}
             </>
-          ) : <p className="rempty">No results match your search.</p>}
+          ) : <p className="rempty">{!data && !error ? 'Loading results...' : rows.length ? 'No results match your search.' : 'Results have not been published yet.'}</p>}
         </div>
       </div>
     </div>

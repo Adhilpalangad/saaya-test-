@@ -1,6 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getSupabase } from '../lib/supabase';
+import { adminFetch } from '../lib/admin-fetch';
+import { galleryImage } from '../lib/images';
 import { EV, SQ, SQN } from '../lib/data';
 
 const DEPTS = ['ME', 'AD', 'ECE', 'EEE', 'CE', 'MCA', 'CSE'];
@@ -13,6 +16,8 @@ const DEPT_TO_SQUAD = {
 export default function AdminPanel() {
   const [auth, setAuth] = useState(false);
   const [pass, setPass] = useState('');
+  const [email, setEmail] = useState('');
+  const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState('');
   const [tab, setTab] = useState('events'); // 'events' | 'gallery' | 'results' | 'leaderboard'
   const [toast, setToast] = useState('');
@@ -44,12 +49,20 @@ export default function AdminPanel() {
   const [isManual, setIsManual] = useState(false);
   const [savingLb, setSavingLb] = useState(false);
 
-  // Check login on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('saaya_admin_logged');
-      if (saved === '1') setAuth(true);
-    }
+    let active = true;
+    const db = getSupabase();
+    const verify = async (session) => {
+      if (!session) { if (active) setAuth(false); return; }
+      try {
+        const res = await fetch('/api/auth', { headers: { Authorization: 'Bearer ' + session.access_token } });
+        const body = await res.json();
+        if (active) { setAuth(res.ok); if (!res.ok) setAuthError(body.error); }
+      } catch { if (active) { setAuth(false); setAuthError('Unable to verify administrator access.'); } }
+    };
+    db.auth.getSession().then(({ data }) => verify(data.session)).catch(() => { if (active) setAuthError('Unable to restore your session.'); });
+    const { data: { subscription } } = db.auth.onAuthStateChange((_event, session) => { setTimeout(() => { if (active) verify(session); }, 0); });
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
   const showToast = (msg) => {
@@ -61,9 +74,9 @@ export default function AdminPanel() {
   const fetchData = async () => {
     try {
       const [evRes, galRes, resRes] = await Promise.all([
-        fetch('/api/events'),
-        fetch('/api/gallery'),
-        fetch('/api/results'),
+        adminFetch('/api/events'),
+        adminFetch('/api/gallery'),
+        adminFetch('/api/results'),
       ]);
 
       if (evRes.ok) {
@@ -86,6 +99,7 @@ export default function AdminPanel() {
       }
     } catch (err) {
       console.error('Error fetching admin data:', err);
+      showToast(err.message || 'Unable to load admin data.');
     }
   };
 
@@ -108,41 +122,40 @@ export default function AdminPanel() {
     }
   }, [selectedEvent, results]);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setAuthError('');
-    // Client-side passcode verification
-    if (pass === 'saaya2026' || pass === 'admin') {
-      sessionStorage.setItem('saaya_admin_logged', '1');
-      setAuth(true);
-      showToast('Logged in successfully');
-    } else {
-      setAuthError('Incorrect passcode. Please try again.');
-    }
+  const handleLogin = async (e) => {
+    e.preventDefault(); setAuthError(''); setSigningIn(true);
+    try {
+      const { data, error } = await getSupabase().auth.signInWithPassword({ email: email.trim(), password: pass });
+      if (error) throw new Error('Invalid email or password.');
+      const res = await fetch('/api/auth', { headers: { Authorization: 'Bearer ' + data.session.access_token } });
+      const body = await res.json();
+      if (!res.ok) { await getSupabase().auth.signOut(); throw new Error(body.error); }
+      setAuth(true); setPass('');
+    } catch (error) { setAuthError(error.message); }
+    finally { setSigningIn(false); }
   };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('saaya_admin_logged');
-    setAuth(false);
-    setPass('');
+  const handleLogout = async () => {
+    await getSupabase().auth.signOut(); setAuth(false); setPass('');
   };
 
   // Event status toggle
   const handleEventStatus = async (eventName, status) => {
     const newStatus = status === 'reset' ? 'upcoming' : status;
-    setStatuses((prev) => ({ ...prev, [eventName]: newStatus }));
+
 
     try {
-      const res = await fetch('/api/events', {
+      const res = await adminFetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eventName, status }),
       });
       if (res.ok) {
+        const data = await res.json();
+        setStatuses(data.eventStatuses);
         showToast(`${eventName} is now ${newStatus.toUpperCase()}`);
       }
     } catch (err) {
-      showToast('Failed to update event status');
+      showToast(err.message || 'Failed to update event status');
     }
   };
 
@@ -164,15 +177,18 @@ export default function AdminPanel() {
     }
 
     setUploading(true);
-    const fd = new FormData();
-    fd.append('file', uploadFile);
-    fd.append('cap', caption || 'Saaya Art Fest');
-    fd.append('y', year);
-
     try {
-      const res = await fetch('/api/gallery', {
-        method: 'POST',
-        body: fd,
+      if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic'].includes(uploadFile.type) || uploadFile.size > 10000000) throw new Error('Choose a JPEG, PNG, WebP, AVIF, or HEIC photo under 10 MB.');
+      const signature = await (await adminFetch('/api/gallery/sign', { method: 'POST' })).json();
+      const fd = new FormData();
+      fd.append('file', uploadFile);
+      for (const field of ['timestamp', 'public_id', 'overwrite', 'allowed_formats', 'signature', 'api_key']) fd.append(field, String(signature[field]));
+      const uploaded = await fetch('https://api.cloudinary.com/v1_1/' + signature.cloud_name + '/image/upload', { method: 'POST', body: fd });
+      const asset = await uploaded.json();
+      if (!uploaded.ok) throw new Error('Photo upload failed. Please try again.');
+      const res = await adminFetch('/api/gallery', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_id: asset.public_id, cap: caption || 'Saaya Art Fest', y: year }),
       });
       const data = await res.json();
       if (res.ok && data.gallery) {
@@ -185,7 +201,7 @@ export default function AdminPanel() {
         showToast(data.error || 'Upload failed');
       }
     } catch (err) {
-      showToast('Error uploading image');
+      showToast(err.message || 'Error uploading image');
     } finally {
       setUploading(false);
     }
@@ -195,7 +211,7 @@ export default function AdminPanel() {
   const handleDeleteGallery = async (id) => {
     if (!confirm('Are you sure you want to delete this photo from the gallery?')) return;
     try {
-      const res = await fetch('/api/gallery', {
+      const res = await adminFetch('/api/gallery', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
@@ -206,7 +222,7 @@ export default function AdminPanel() {
         showToast('Photo removed from Gallery');
       }
     } catch (err) {
-      showToast('Failed to delete photo');
+      showToast(err.message || 'Failed to delete photo');
     }
   };
 
@@ -230,7 +246,7 @@ export default function AdminPanel() {
   const handleSaveWinners = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/results', {
+      const res = await adminFetch('/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -253,7 +269,7 @@ export default function AdminPanel() {
         );
       }
     } catch (err) {
-      showToast('Failed to save results');
+      showToast(err.message || 'Failed to save results');
     }
   };
 
@@ -275,7 +291,7 @@ export default function AdminPanel() {
   const handleSaveManualPoints = async () => {
     setSavingLb(true);
     try {
-      const res = await fetch('/api/results', {
+      const res = await adminFetch('/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -295,7 +311,7 @@ export default function AdminPanel() {
         showToast(data.error || 'Failed to save points');
       }
     } catch (err) {
-      showToast('Error saving manual points');
+      showToast(err.message || 'Error saving manual points');
     } finally {
       setSavingLb(false);
     }
@@ -306,7 +322,7 @@ export default function AdminPanel() {
     if (!confirm('Recalculate leaderboard points automatically from all 1st, 2nd, and 3rd place event winners?')) return;
     setSavingLb(true);
     try {
-      const res = await fetch('/api/results', {
+      const res = await adminFetch('/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reset_to_auto' }),
@@ -323,7 +339,7 @@ export default function AdminPanel() {
         showToast(data.error || 'Failed to recalculate');
       }
     } catch (err) {
-      showToast('Error recalculating points');
+      showToast(err.message || 'Error recalculating points');
     } finally {
       setSavingLb(false);
     }
@@ -348,18 +364,22 @@ export default function AdminPanel() {
             </svg>
           </div>
           <h2>SAAYA 26 &middot; Admin Portal</h2>
-          <p>Enter the administrator passcode to access event live status, gallery uploads, results, and leaderboard controls.</p>
+          <p>Sign in with your administrator email and password to access event live status, gallery uploads, results, and leaderboard controls.</p>
           <form onSubmit={handleLogin} className="adm-form">
+            <input type="email" aria-label="Admin email" placeholder="Admin Email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required className="adm-input" />
             <input
               type="password"
-              placeholder="Admin Passcode"
+              placeholder="Password"
+              aria-label="Password"
+              autoComplete="current-password"
+              required
               value={pass}
               onChange={(e) => setPass(e.target.value)}
               autoFocus
               className="adm-input"
             />
             {authError && <p className="adm-err">{authError}</p>}
-            <button type="submit" className="adm-btn">Sign In to Admin</button>
+            <button type="submit" className="adm-btn" disabled={signingIn}>{signingIn ? 'Signing in...' : 'Sign In to Admin'}</button>
             <div style={{ marginTop: 14 }}>
               <Link href="/" className="adm-back-link">&larr; Back to Public Website</Link>
             </div>
@@ -525,7 +545,7 @@ export default function AdminPanel() {
             {gallery.map((g) => (
               <div key={g.id || g.src} className="adm-gal-card">
                 <div className="adm-gal-thumb">
-                  {g.src ? <img src={g.src} alt={g.cap} /> : <div className="adm-gal-empty">No Image</div>}
+                  {g.src ? <img src={galleryImage(g, 400)} alt={g.cap} /> : <div className="adm-gal-empty">No Image</div>}
                   <span className="adm-gal-yr">{g.y}</span>
                 </div>
                 <div className="adm-gal-meta">

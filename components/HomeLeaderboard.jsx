@@ -1,26 +1,19 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { FEST, BOARD } from '../lib/data';
+import { FEST, SQ, SQN } from '../lib/data';
+
+import { usePublicData } from '../lib/use-public-data';
 
 export default function HomeLeaderboard() {
-  const [board, setBoard] = useState(BOARD);
-
-  useEffect(() => {
-    fetch('/api/results')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.board && Array.isArray(data.board) && data.board.length) {
-          setBoard(data.board);
-        }
-      })
-      .catch((err) => console.error('Error fetching leaderboard:', err));
-  }, []);
+  const { data, error } = usePublicData('/api/results');
+  const board = data?.board || SQN.map(n => [n, SQ[n].d.join(', '), 0]);
 
   return (
     <section id="results">
       <h2 id="lbt">
         {FEST.name.charAt(0) + FEST.name.slice(1).toLowerCase() + ' ' + String(FEST.year).slice(2) + ' Leaderboard'}
       </h2>
+      {error && <p role="status">{error}</p>}
       <div className="lb" id="lb">
         {board.map(([name, depts, pts], i) => (
           <div className="row" key={name}>

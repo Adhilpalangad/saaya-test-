@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { GAL } from '../lib/data';
+import { usePublicData } from '../lib/use-public-data';
+import { galleryImage } from '../lib/images';
 
 const COL = [
   ['#7a1c1c', '#240c0a'],
@@ -14,20 +15,10 @@ const SH = ['big', '', 'tall', 'wide', '', '', 'tall', '', 'wide', '', 'big', ''
 const col = (i) => ({ '--a': COL[i % COL.length][0], '--b': COL[i % COL.length][1] });
 
 export default function GalleryPage() {
-  const [items, setItems] = useState(GAL);
+  const { data, error } = usePublicData('/api/gallery');
+  const items = data?.gallery || [];
   const [flt, setFlt] = useState('All');
   const [open, setOpen] = useState(null); // index inside `vis`
-
-  useEffect(() => {
-    fetch('/api/gallery')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.gallery && data.gallery.length) {
-          setItems(data.gallery);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const years = ['All', ...new Set(items.map((g) => g.y))];
   const vis = items.map((g, i) => i).filter((i) => flt === 'All' || String(items[i].y) === flt);
@@ -48,7 +39,7 @@ export default function GalleryPage() {
     };
   });
 
-  const cur = open === null ? null : vis[open];
+  const cur = open === null || vis[open] === undefined ? null : vis[open];
 
   return (
     <>
@@ -57,6 +48,8 @@ export default function GalleryPage() {
           <h1>The Saaya Archive</h1>
           <p>A visual journey through the years. Witness the creativity, energy, and spirit of AWH Engineering College.</p>
           <h2>Previous Editions</h2>
+          {error && <p role="status">{error}</p>}
+          {!items.length && <p>{!data && !error ? 'Loading photos...' : 'No photos have been published yet.'}</p>}
           <div className="gch" id="gch">
             {years.map((y) => (
               <button
@@ -84,7 +77,7 @@ export default function GalleryPage() {
                 }}
               >
                 {items[i].src ? (
-                  <img src={items[i].src} alt={items[i].cap} loading="lazy" />
+                  <img src={galleryImage(items[i])} alt={items[i].cap} loading="lazy" />
                 ) : (
                   <span className="gn">{String(i + 1).padStart(2, '0')}</span>
                 )}
@@ -104,7 +97,7 @@ export default function GalleryPage() {
             style={items[cur].src ? undefined : col(cur)}
           >
             {items[cur].src ? (
-              <img src={items[cur].src} alt={items[cur].cap} />
+              <img src={galleryImage(items[cur], 1800)} alt={items[cur].cap} />
             ) : (
               <span>{String(cur + 1).padStart(2, '0')}</span>
             )}
