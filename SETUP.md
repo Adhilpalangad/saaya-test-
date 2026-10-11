@@ -45,6 +45,8 @@ Open `/admin` and sign in with the authorized Supabase account. The old demo pas
 
 Use Node.js 22 or newer for the supplied test command.
 
+The framework security branch updates Next.js to 16.4.0 and React/React DOM to 19.3.0. It includes the integration branch's changes; `main` is untouched. The integration branch alone retains the original framework versions.
+
 ```sh
 npm test
 npm run build
