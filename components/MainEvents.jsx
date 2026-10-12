@@ -35,7 +35,7 @@ export default function MainEvents() {
           <i className="pg" key={'p' + cur} />
           <div className="sp swap" key={cur}>
             <span className="big">0{cur + 1}</span><small>{m[3] || 'Main Event'}</small><h3>{m[0]}</h3>
-            <p>{m[1] || 'Details coming soon.'}</p><a className="btn" href="#">Register</a>
+            <p>{m[1] || 'Details coming soon.'}</p>
           </div>
         </div>
       </div>

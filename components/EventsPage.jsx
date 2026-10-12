@@ -127,11 +127,6 @@ export default function EventsPage() {
                   <p>{cal}{DAYS[e[1]]}</p>
                   <p>{clk}{e[2]}</p>
                   <p>{pin}{e[3] || 'Main Stage'}</p>
-
-                  <a className="rg" href="#">
-                    <span>Register</span>
-                    {go}
-                  </a>
                 </div>
               );
             })

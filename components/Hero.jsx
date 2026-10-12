@@ -28,7 +28,6 @@ export default function Hero() {
       <div className="count">{left.map((v, i) => <div key={i}>{pad(v)}<small>{labels[i]}</small></div>)}</div>
       <p className="dates">23 | 24 OCT 2026</p>
       <p className="college">AWH Engineering College</p>
-      <a className="btn" href="#">Register Now</a>
     </section>
   );
 }

@@ -43,9 +43,6 @@ export default function Nav() {
             </button>
           </li>
           <li>
-            <a className="btn" href="#">Register</a>
-          </li>
-          <li>
             <button
               className={`mob-btn ${menuOpen ? 'open' : ''}`}
               onClick={() => setMenuOpen(!menuOpen)}
@@ -69,7 +66,6 @@ export default function Nav() {
           <li><Link href="/results" onClick={() => setMenuOpen(false)}>Results</Link></li>
           <li><Link href="/about" onClick={() => setMenuOpen(false)}>About</Link></li>
         </ul>
-        <a className="btn" href="#" onClick={() => setMenuOpen(false)}>Register</a>
       </div>
     </>
   );
