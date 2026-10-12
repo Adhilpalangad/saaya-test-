@@ -33,7 +33,14 @@ export default function Footer() {
       <div className="fg">
         <div><h3>About Us</h3><p>Saaya College Art Fest brings together artists and performers from various fields to showcase their talent and creativity in a vibrant and energetic atmosphere.</p></div>
         <div><h3>Quick Links</h3>
-          <ul><li><Link href="/">Home</Link></li><li><Link href="/about">About</Link></li><li><Link href="/events">Events</Link></li><li><Link href="/gallery">Gallery</Link></li><li><Link href="/results">Results</Link></li></ul>
+          <ul>
+            <li><Link href="/">Home</Link></li>
+            <li><Link href="/about">About</Link></li>
+            <li><Link href="/about#coordinators">Coordination Team</Link></li>
+            <li><Link href="/events">Events</Link></li>
+            <li><Link href="/gallery">Gallery</Link></li>
+            <li><Link href="/results">Results</Link></li>
+          </ul>
         </div>
         <div><h3>Contact</h3>
           <p>Email: <a href="mailto:info@awhengg.org" style={{ color: 'var(--text)' }}>info@awhengg.org</a><br />

@@ -4,7 +4,7 @@ import { ED, TEAM, EVENT_COUNT } from '../../lib/data';
 export const metadata = { title: 'About | SAAYA 26' };
 
 const COL = [['#7a1c1c', '#240c0a'], ['#2a1a18', '#6e1616'], ['#5e1414', '#1c1412'], ['#3a1210', '#8b2a1e'], ['#1c1412', '#5c1512']];
-const ini = (n) => n.replace(/^(Mr|Ms)\.?\s+/, '').split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+const ini = (n) => n.replace(/^(Mr|Ms)\.?\s+/, '').replace(/[^\w\s]/g, '').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
 export default function AboutPage() {
   let k = 0;
@@ -57,19 +57,44 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {TEAM && TEAM.length > 0 && (
-          <section className="abx2">
-            <h2 className="abr">Coordination Team</h2>
+        <section className="abx2" id="coordinators">
+          <h2 className="abr">Coordination Team</h2>
+          {TEAM && TEAM.length > 0 ? (
             <div id="abtm">
               {TEAM.map(([group, people]) => (
                 <div className="tg0" key={group}>
                   <h3>{group}</h3>
                   <div className="tm">
-                    {people.map(([name, dept]) => {
+                    {people.map((person) => {
+                      let [name, dept, img] = person;
+                      if (!img && dept && (dept.startsWith('/') || dept.startsWith('http') || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(dept))) {
+                        img = dept;
+                        dept = '';
+                      }
                       const c = COL[k++ % COL.length];
+                      const src = typeof img === 'object' ? img?.src : img;
+                      const isPaapi = src && src.includes('paapi');
+                      const isHridhya = src && (src.includes('Image to PDF') || src.includes('page-0001'));
+                      const isAleesha = src && src.includes('Aleesha');
+                      const isRamzi = src && src.includes('Ramzi');
+                      const imgStyle = typeof img === 'object'
+                        ? img?.style
+                        : isPaapi
+                        ? { transform: 'scale(1.75)', transformOrigin: '50% 36%' }
+                        : isHridhya
+                        ? { transform: 'scale(1.35)', transformOrigin: 'center 35%' }
+                        : isAleesha
+                        ? { transform: 'scale(1.25)', transformOrigin: 'center 20%' }
+                        : isRamzi
+                        ? { transform: 'scale(1.15)', transformOrigin: '45% 22%' }
+                        : undefined;
                       return (
                         <div className="pc abr" key={group + name} style={{ '--a': c[0], '--b': c[1] }}>
-                          <div className="av">{ini(name)}</div><h4>{name}</h4><p>{dept}</p>
+                          <div className="av">
+                            {src ? <img src={encodeURI(src)} alt={name} loading="lazy" style={imgStyle} /> : ini(name)}
+                          </div>
+                          <h4>{name}</h4>
+                          {dept ? <p>{dept}</p> : null}
                         </div>
                       );
                     })}
@@ -77,8 +102,10 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <p className="rempty" role="status">No coordination team members listed.</p>
+          )}
+        </section>
       </div>
     </div>
   );
