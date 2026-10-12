@@ -542,3 +542,12 @@ footer li:before{content:"• ";color:var(--accent2)}
   .adm-section{padding:16px}
 }
 
+/* Hide Next.js dev indicator floating badge */
+nextjs-portal,
+[data-nextjs-dev-indicator],
+[data-nextjs-toast],
+#__next-build-watcher {
+  display: none !important;
+}
+
+
