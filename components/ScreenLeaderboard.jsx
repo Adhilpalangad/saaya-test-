@@ -226,7 +226,7 @@ export default function ScreenLeaderboard() {
                     <div className="screen-squad-left">
                       {/* Rank Badge */}
                       <div className="screen-rank-badge">
-                        <RankIcon size={20} color={rankInfo.color} />
+                        <RankIcon size={18} color={rankInfo.color} />
                         <span>#{index + 1}</span>
                       </div>
 
