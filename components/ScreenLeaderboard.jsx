@@ -8,22 +8,19 @@ import {
   Medal,
   Award,
   Flame,
-  Sparkles,
   Clock,
-  Radio,
-  TrendingUp,
   Maximize2,
   Minimize2,
 } from './Icons';
 
 export default function ScreenLeaderboard() {
-  const { data, error } = usePublicData('/api/results');
+  const { data } = usePublicData('/api/results');
 
   // Falling petals identical to hero section
   const [petals, setPetals] = useState([]);
   useEffect(() => {
     setPetals(
-      Array.from({ length: 16 }, () => ({
+      Array.from({ length: 14 }, () => ({
         l: 5 + Math.random() * 90,
         d: 9 + Math.random() * 9,
         w: -Math.random() * 14,
@@ -34,7 +31,6 @@ export default function ScreenLeaderboard() {
 
   // Live real-time clock
   const [timeStr, setTimeStr] = useState('');
-  const [dateStr, setDateStr] = useState('');
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -45,13 +41,6 @@ export default function ScreenLeaderboard() {
           second: '2-digit',
           hour12: true,
         })
-      );
-      setDateStr(
-        now.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }).toUpperCase()
       );
     };
     updateTime();
@@ -128,27 +117,24 @@ export default function ScreenLeaderboard() {
       label: '1',
       badgeClass: 'pos-1',
       color: '#ffd700',
-      bg: 'rgba(224, 176, 48, 0.2)',
-      border: 'rgba(224, 176, 48, 0.65)',
-      glow: 'rgba(224, 176, 48, 0.35)',
+      bg: 'rgba(224, 176, 48, 0.22)',
+      border: 'rgba(224, 176, 48, 0.7)',
       Icon: Crown,
     },
     {
       label: '2',
       badgeClass: 'pos-2',
       color: '#e2e8f0',
-      bg: 'rgba(226, 232, 240, 0.14)',
-      border: 'rgba(226, 232, 240, 0.4)',
-      glow: 'rgba(226, 232, 240, 0.2)',
+      bg: 'rgba(226, 232, 240, 0.16)',
+      border: 'rgba(226, 232, 240, 0.5)',
       Icon: Medal,
     },
     {
       label: '3',
       badgeClass: 'pos-3',
       color: '#e29b68',
-      bg: 'rgba(205, 127, 50, 0.16)',
-      border: 'rgba(205, 127, 50, 0.45)',
-      glow: 'rgba(205, 127, 50, 0.2)',
+      bg: 'rgba(205, 127, 50, 0.18)',
+      border: 'rgba(205, 127, 50, 0.5)',
       Icon: Award,
     },
   ];
@@ -157,7 +143,7 @@ export default function ScreenLeaderboard() {
 
   return (
     <main id="screen-view">
-      {/* Background Hero elements (only ambient visuals, no texts) */}
+      {/* Background Hero visual elements (only ambient visual graphics, no texts) */}
       <div className="screen-art" aria-hidden="true" />
       <div className="screen-petals" aria-hidden="true">
         {petals.map((p, i) => (
@@ -175,297 +161,213 @@ export default function ScreenLeaderboard() {
       </div>
 
       <div className="screen-container">
-        {/* TOP BAR: Logo, Title, Live Status & Real-time Clock */}
+        {/* TOP BAR: Clean Fest Branding, Live Status & Time Clock */}
         <header className="screen-header">
           <div className="screen-brand">
             <div className="screen-logo-badge">
-              <Trophy size={32} color="#ffd700" />
+              <Trophy size={26} color="#ffd700" />
             </div>
-            <div className="screen-brand-text">
-              <h1>SAAYA 2026</h1>
-              <p>AWH Engineering College &middot; The Grand Arts Fiesta</p>
-            </div>
+            <h1 className="screen-brand-title">SAAYA 2026</h1>
           </div>
 
           <div className="screen-header-meta">
             <div className="screen-live-pill">
               <span className="screen-live-dot" />
-              <span>Live Standings</span>
+              <span>LIVE</span>
             </div>
-            <div className="screen-clock" title={dateStr}>
-              {timeStr || 'LIVE'}
-            </div>
+            <div className="screen-clock">{timeStr || 'LIVE'}</div>
           </div>
         </header>
 
-        {/* MAIN BODY LAYOUT: Standings on top (or left in landscape) & Results below (or right in landscape) */}
+        {/* MAIN BODY LAYOUT */}
         <div className="screen-body-layout">
-          {/* SECTION 1 (TOP/MIDDLE): TOTAL TEAMS POINTS CARD */}
+          {/* SECTION 1: TOTAL TEAM POINTS CARD */}
           <section className="screen-standings-card" aria-label="Team Standings">
-          <div className="screen-card-header">
-            <div className="screen-card-title">
-              <Trophy size={28} color="#e0b030" />
-              <div>
-                <h2>Total Team Points</h2>
-                <p>Overall Squad Championship Standings</p>
+            <div className="screen-card-header">
+              <div className="screen-card-title">
+                <Trophy size={24} color="#ffd700" />
+                <h2>Team Standings</h2>
               </div>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.82rem',
-                color: 'var(--muted)',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-              }}
-            >
-              <TrendingUp size={16} color="#4ade80" />
-              <span>Real-Time Points Tally</span>
-            </div>
-          </div>
 
-          <div className="screen-squads-list">
-            {board.map(([name, depts, pts], index) => {
-              const rankInfo = rankStyles[index] || {
-                label: String(index + 1),
-                color: '#eadfd2',
-                bg: 'rgba(255, 255, 255, 0.05)',
-                border: 'rgba(255, 255, 255, 0.1)',
-                Icon: Award,
-              };
-              const squadInfo = squadStyles[name] || {
-                color: '#eadfd2',
-                colorLight: '#ffffff',
-                banner: SQ[name]?.banner || '/images/logo-nav-white.png',
-                depts: depts || '',
-              };
-              const percent = Math.min(100, Math.round(((Number(pts) || 0) / maxPoints) * 100));
-              const isFirst = index === 0 && (Number(pts) || 0) > 0;
-              const RankIcon = rankInfo.Icon;
+            <div className="screen-squads-list">
+              {board.map(([name, depts, pts], index) => {
+                const rankInfo = rankStyles[index] || {
+                  label: String(index + 1),
+                  color: '#eadfd2',
+                  bg: 'rgba(255, 255, 255, 0.05)',
+                  border: 'rgba(255, 255, 255, 0.1)',
+                  Icon: Award,
+                };
+                const squadInfo = squadStyles[name] || {
+                  color: '#eadfd2',
+                  colorLight: '#ffffff',
+                  banner: SQ[name]?.banner || '/images/logo-nav-white.png',
+                  depts: depts || '',
+                };
+                const percent = Math.min(100, Math.round(((Number(pts) || 0) / maxPoints) * 100));
+                const isFirst = index === 0 && (Number(pts) || 0) > 0;
+                const RankIcon = rankInfo.Icon;
 
-              return (
-                <div
-                  key={name}
-                  className={`screen-squad-item ${isFirst ? 'leader' : ''}`}
-                  style={{
-                    '--sq-color': squadInfo.color,
-                    '--sq-color-light': squadInfo.colorLight,
-                    '--sq-glow': squadInfo.color + '44',
-                    '--sq-border': isFirst ? 'rgba(224, 176, 48, 0.5)' : squadInfo.color + '40',
-                    '--rank-color': rankInfo.color,
-                    '--rank-bg': rankInfo.bg,
-                    '--rank-border': rankInfo.border,
-                    '--rank-glow': rankInfo.glow,
-                  }}
-                >
-                  {/* Rank Badge */}
-                  <div className="screen-rank-badge" title={`Rank ${index + 1}`}>
-                    <RankIcon size={26} color={rankInfo.color} />
-                    <span style={{ fontSize: '1rem', marginTop: '2px' }}>#{index + 1}</span>
-                  </div>
-
-                  {/* Crest Banner */}
-                  <div className="screen-squad-crest">
-                    <img
-                      src={squadInfo.banner}
-                      alt={`${name} Crest`}
-                      loading="eager"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-
-                  {/* Squad Info */}
-                  <div className="screen-squad-info">
-                    <div className="screen-squad-name-row">
-                      <h3 className="screen-squad-name">{name}</h3>
-                      {isFirst && (
-                        <span className="screen-leader-chip">
-                          <Crown size={13} color="#f7d368" />
-                          <span>Current Leader</span>
-                        </span>
-                      )}
-                    </div>
-                    <p className="screen-squad-depts">{squadInfo.depts || depts}</p>
-                    <div className="screen-squad-bar-wrap">
-                      <div className="screen-squad-bar" style={{ width: `${percent}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Big Points Total */}
-                  <div className="screen-squad-points">
-                    <span className="screen-squad-points-val">{pts}</span>
-                    <span className="screen-squad-points-label">POINTS</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* SECTION 2 (BOTTOM): LATEST TWO RESULTS SIDE BY SIDE */}
-        <section className="screen-results-section" aria-label="Latest Results">
-          <div className="screen-section-title">
-            <div className="screen-section-title-left">
-              <Flame size={24} color="#e0453b" />
-              <div>
-                <h3>Latest Results</h3>
-                <p>Recently Announced Event Competitions</p>
-              </div>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.8rem',
-                color: 'var(--muted)',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-              }}
-            >
-              <Sparkles size={16} color="#e0b030" />
-              <span>Official Jury Confirmations</span>
-            </div>
-          </div>
-
-          <div className="screen-results-grid">
-            {/* CARD 1: Latest Result */}
-            {latestResults[0] ? (
-              <div className="screen-result-card primary">
-                <div className="screen-result-card-top">
-                  <div>
-                    <h4 className="screen-result-event-name">{latestResults[0].n}</h4>
-                    <span className="screen-result-category">
-                      <Radio size={13} color="#e0453b" />
-                      <span>{latestResults[0].t || 'Competition'}</span>
-                    </span>
-                  </div>
-                  <span className="screen-result-badge">
-                    <Clock size={12} color="#ff7870" />
-                    <span>Latest Update</span>
-                  </span>
-                </div>
-
-                <div className="screen-winners-list">
-                  {latestResults[0].p.map((winner, idx) => {
-                    const rankInfo = rankStyles[idx] || rankStyles[2];
-                    const squadInfo = squadStyles[winner.q] || { color: '#e0453b' };
-                    const RankIcon = rankInfo.Icon;
-
-                    return (
-                      <div key={idx} className={`screen-winner-row p-${idx + 1}`}>
-                        <div className={`screen-winner-pos ${rankInfo.badgeClass}`}>
-                          <RankIcon size={20} color={rankInfo.color} />
-                        </div>
-                        <div className="screen-winner-details">
-                          <p className="screen-winner-name" title={winner.n}>
-                            {winner.n}
-                          </p>
-                          <div className="screen-winner-meta">
-                            <span>
-                              S{winner.s} &middot; {winner.d}
-                            </span>
-                            <span
-                              className="screen-winner-squad-tag"
-                              style={{
-                                color: squadInfo.color,
-                                border: `1px solid ${squadInfo.color}55`,
-                              }}
-                            >
-                              {winner.q}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="screen-winner-pts">
-                          {defaultPointsPerRank[idx] || '+1 PT'}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="screen-result-card screen-empty-card">
-                <Clock size={36} color="var(--muted)" />
-                <h4>Awaiting First Result</h4>
-                <p>Scores will display in real time as judges finalize the event results.</p>
-              </div>
-            )}
-
-            {/* CARD 2: Second Latest Result */}
-            {latestResults[1] ? (
-              <div className="screen-result-card">
-                <div className="screen-result-card-top">
-                  <div>
-                    <h4 className="screen-result-event-name">{latestResults[1].n}</h4>
-                    <span className="screen-result-category">
-                      <Radio size={13} color="#e0453b" />
-                      <span>{latestResults[1].t || 'Competition'}</span>
-                    </span>
-                  </div>
-                  <span
-                    className="screen-result-badge"
+                return (
+                  <div
+                    key={name}
+                    className={`screen-squad-item ${isFirst ? 'leader' : ''}`}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.06)',
-                      borderColor: 'rgba(255, 255, 255, 0.15)',
-                      color: 'var(--muted)',
+                      '--sq-color': squadInfo.color,
+                      '--sq-color-light': squadInfo.colorLight,
+                      '--sq-glow': squadInfo.color + '44',
+                      '--sq-border': isFirst ? 'rgba(224, 176, 48, 0.55)' : squadInfo.color + '40',
+                      '--rank-color': rankInfo.color,
+                      '--rank-bg': rankInfo.bg,
+                      '--rank-border': rankInfo.border,
                     }}
                   >
-                    <span>Previous Result</span>
-                  </span>
-                </div>
+                    <div className="screen-squad-left">
+                      {/* Rank Badge */}
+                      <div className="screen-rank-badge">
+                        <RankIcon size={20} color={rankInfo.color} />
+                        <span>#{index + 1}</span>
+                      </div>
 
-                <div className="screen-winners-list">
-                  {latestResults[1].p.map((winner, idx) => {
-                    const rankInfo = rankStyles[idx] || rankStyles[2];
-                    const squadInfo = squadStyles[winner.q] || { color: '#e0453b' };
-                    const RankIcon = rankInfo.Icon;
+                      {/* Crest Banner */}
+                      <div className="screen-squad-crest">
+                        <img
+                          src={squadInfo.banner}
+                          alt={`${name} Crest`}
+                          loading="eager"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
 
-                    return (
-                      <div key={idx} className={`screen-winner-row p-${idx + 1}`}>
-                        <div className={`screen-winner-pos ${rankInfo.badgeClass}`}>
-                          <RankIcon size={20} color={rankInfo.color} />
-                        </div>
-                        <div className="screen-winner-details">
-                          <p className="screen-winner-name" title={winner.n}>
-                            {winner.n}
-                          </p>
-                          <div className="screen-winner-meta">
-                            <span>
-                              S{winner.s} &middot; {winner.d}
-                            </span>
-                            <span
-                              className="screen-winner-squad-tag"
-                              style={{
-                                color: squadInfo.color,
-                                border: `1px solid ${squadInfo.color}55`,
-                              }}
-                            >
-                              {winner.q}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="screen-winner-pts">
-                          {defaultPointsPerRank[idx] || '+1 PT'}
+                      {/* Squad Name and Departments */}
+                      <div className="screen-squad-info">
+                        <h3 className="screen-squad-name">{name}</h3>
+                        <p className="screen-squad-depts">{squadInfo.depts || depts}</p>
+                        <div className="screen-squad-bar-wrap">
+                          <div className="screen-squad-bar" style={{ width: `${percent}%` }} />
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+
+                    {/* Big Visible Points */}
+                    <div className="screen-squad-points">
+                      <span className="screen-squad-points-val">{pts}</span>
+                      <span className="screen-squad-points-label">PTS</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SECTION 2: LATEST RESULTS (TWO SIDES) */}
+          <section className="screen-results-section" aria-label="Latest Results">
+            <div className="screen-section-title">
+              <div className="screen-section-title-left">
+                <Flame size={22} color="#e0453b" />
+                <h3>Latest Results</h3>
+              </div>
+            </div>
+
+            <div className="screen-results-grid">
+              {/* CARD 1: Most Recent Result */}
+              {latestResults[0] ? (
+                <div className="screen-result-card primary">
+                  <div className="screen-result-card-top">
+                    <h4 className="screen-result-event-name">{latestResults[0].n}</h4>
+                    <span className="screen-result-category">
+                      {latestResults[0].t || 'Event'}
+                    </span>
+                  </div>
+
+                  <div className="screen-winners-list">
+                    {latestResults[0].p.map((winner, idx) => {
+                      const rankLabel = idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd';
+                      const squadInfo = squadStyles[winner.q] || { color: '#e0453b' };
+
+                      return (
+                        <div key={idx} className={`screen-winner-row p-${idx + 1}`}>
+                          <div className="screen-winner-left">
+                            <span className={`screen-winner-pos-tag pos-${idx + 1}`}>
+                              {rankLabel}
+                            </span>
+                            <div className="screen-winner-details">
+                              <span className="screen-winner-name" title={winner.n}>
+                                {winner.n}
+                              </span>
+                              <span className="screen-winner-meta">
+                                S{winner.s} &middot; {winner.d} &middot;{' '}
+                                <strong style={{ color: squadInfo.color }}>{winner.q}</strong>
+                              </span>
+                            </div>
+                          </div>
+                          <span className="screen-winner-pts">
+                            {defaultPointsPerRank[idx] || '+1 PT'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="screen-result-card screen-empty-card">
-                <Sparkles size={36} color="var(--muted)" />
-                <h4>Next Event In Progress</h4>
-                <p>Second recent result will automatically display here on verification.</p>
-              </div>
-            )}
-          </div>
-        </section>
+              ) : (
+                <div className="screen-result-card screen-empty-card">
+                  <Clock size={32} color="var(--muted)" />
+                  <h4>Awaiting Result</h4>
+                  <p>Scores will display live upon judge verification.</p>
+                </div>
+              )}
+
+              {/* CARD 2: Second Most Recent Result */}
+              {latestResults[1] ? (
+                <div className="screen-result-card">
+                  <div className="screen-result-card-top">
+                    <h4 className="screen-result-event-name">{latestResults[1].n}</h4>
+                    <span className="screen-result-category">
+                      {latestResults[1].t || 'Event'}
+                    </span>
+                  </div>
+
+                  <div className="screen-winners-list">
+                    {latestResults[1].p.map((winner, idx) => {
+                      const rankLabel = idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd';
+                      const squadInfo = squadStyles[winner.q] || { color: '#e0453b' };
+
+                      return (
+                        <div key={idx} className={`screen-winner-row p-${idx + 1}`}>
+                          <div className="screen-winner-left">
+                            <span className={`screen-winner-pos-tag pos-${idx + 1}`}>
+                              {rankLabel}
+                            </span>
+                            <div className="screen-winner-details">
+                              <span className="screen-winner-name" title={winner.n}>
+                                {winner.n}
+                              </span>
+                              <span className="screen-winner-meta">
+                                S{winner.s} &middot; {winner.d} &middot;{' '}
+                                <strong style={{ color: squadInfo.color }}>{winner.q}</strong>
+                              </span>
+                            </div>
+                          </div>
+                          <span className="screen-winner-pts">
+                            {defaultPointsPerRank[idx] || '+1 PT'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="screen-result-card screen-empty-card">
+                  <Clock size={32} color="var(--muted)" />
+                  <h4>Next Event In Progress</h4>
+                  <p>Next verified competition result will appear here.</p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </div>
 
@@ -476,7 +378,7 @@ export default function ScreenLeaderboard() {
         aria-label="Toggle Fullscreen LED Mode"
         title="Toggle Fullscreen"
       >
-        {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+        {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
       </button>
     </main>
   );
