@@ -21,8 +21,8 @@ export const metadata = {
 };
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
-/* runs before first paint: sets the saved light/dark theme and the "loading" lock used by the sequence */
-const init = `document.documentElement.className+=' loading';try{var t=localStorage.getItem('saayaTheme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}`;
+/* runs before first paint: sets the saved light/dark theme and the "loading" lock used by the preloader */
+const init = `document.documentElement.className+=' loading';setTimeout(function(){document.documentElement.classList.remove('loading')},7000);try{var t=localStorage.getItem('saayaTheme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}`;
 
 export default function RootLayout({ children }) {
   return (
