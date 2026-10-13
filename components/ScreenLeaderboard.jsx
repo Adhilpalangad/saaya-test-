@@ -198,8 +198,10 @@ export default function ScreenLeaderboard() {
           </div>
         </header>
 
-        {/* SECTION 1 (TOP/MIDDLE): TOTAL TEAMS POINTS CARD */}
-        <section className="screen-standings-card" aria-label="Team Standings">
+        {/* MAIN BODY LAYOUT: Standings on top (or left in landscape) & Results below (or right in landscape) */}
+        <div className="screen-body-layout">
+          {/* SECTION 1 (TOP/MIDDLE): TOTAL TEAMS POINTS CARD */}
+          <section className="screen-standings-card" aria-label="Team Standings">
           <div className="screen-card-header">
             <div className="screen-card-title">
               <Trophy size={28} color="#e0b030" />
@@ -464,6 +466,7 @@ export default function ScreenLeaderboard() {
             )}
           </div>
         </section>
+        </div>
       </div>
 
       {/* Discreet fullscreen control button for stage LED operator */}
