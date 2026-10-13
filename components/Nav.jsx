@@ -1,14 +1,21 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function Nav() {
+  const pathname = usePathname();
   const [theme, setTheme] = useState('light');
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setTheme(document.documentElement.dataset.theme || 'light');
   }, []);
+
+  if (pathname?.startsWith('/screen') || pathname?.startsWith('/leaderboard')) {
+    return null;
+  }
+
 
   const toggle = () => {
     const t = theme === 'dark' ? 'light' : 'dark';
