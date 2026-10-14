@@ -37,10 +37,11 @@ export default function AdminPanel() {
   // Results state
   const [results, setResults] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState('Thiruvathirakali');
+  const [isGroup, setIsGroup] = useState(false);
   const [winners, setWinners] = useState([
-    { n: '', s: 4, d: 'CSE', q: 'Lannister' },
-    { n: '', s: 4, d: 'ME', q: 'Targaryen' },
-    { n: '', s: 4, d: 'EEE', q: 'Stark' },
+    { n: '', s: 4, d: 'CSE', q: 'Lannister', place: 1 },
+    { n: '', s: 4, d: 'ME', q: 'Targaryen', place: 2 },
+    { n: '', s: 4, d: 'EEE', q: 'Stark', place: 3 },
   ]);
   const [board, setBoard] = useState([]);
   const [points, setPoints] = useState({});
@@ -107,33 +108,44 @@ export default function AdminPanel() {
     if (auth) fetchData();
   }, [auth]);
 
+  // Check if an event name is typically a group program
+  const isKnownGroupEvent = (name = '') =>
+    /group|oppana|duffmuttu|vattapattu|kolkali|thiruvathirakali|mime|synchronisation/i.test(name);
+
   // When event changes in results tab, populate existing winners if any
   useEffect(() => {
-    if (!results.length) return;
     const found = results.find((r) => r.n === selectedEvent);
     if (found && Array.isArray(found.p) && found.p.length > 0) {
-      const nextWinners = [
-        { n: '', s: 4, d: 'CSE', q: 'Lannister' },
-        { n: '', s: 4, d: 'ME', q: 'Targaryen' },
-        { n: '', s: 4, d: 'EEE', q: 'Stark' },
-      ];
-      found.p.forEach((p, idx) => {
-        const placeIdx = typeof p.place === 'number' && p.place >= 1 && p.place <= 3 ? p.place - 1 : idx;
-        if (placeIdx >= 0 && placeIdx < 3) {
-          nextWinners[placeIdx] = {
-            n: p.n || '',
-            s: p.s || 4,
-            d: p.d || 'CSE',
-            q: p.q || DEPT_TO_SQUAD[p.d] || 'Lannister',
-          };
-        }
-      });
-      setWinners(nextWinners);
+      setIsGroup(Boolean(found.isGroup));
+      const p1 = found.p.find((p, i) => (p.place || i + 1) === 1);
+      const p2 = found.p.find((p, i) => (p.place || i + 1) === 2);
+      const p3s = found.p.filter((p, i) => (p.place || i + 1) === 3);
+
+      const next = [];
+      next.push(p1 ? {
+        n: p1.n || '', s: p1.s || 4, d: p1.d || 'CSE', q: p1.q || DEPT_TO_SQUAD[p1.d] || 'Lannister', place: 1
+      } : { n: '', s: 4, d: 'CSE', q: 'Lannister', place: 1 });
+
+      next.push(p2 ? {
+        n: p2.n || '', s: p2.s || 4, d: p2.d || 'ME', q: p2.q || DEPT_TO_SQUAD[p2.d] || 'Targaryen', place: 2
+      } : { n: '', s: 4, d: 'ME', q: 'Targaryen', place: 2 });
+
+      if (p3s.length > 0) {
+        p3s.forEach((p, idx) => {
+          next.push({
+            n: p.n || '', s: p.s || 4, d: p.d || 'EEE', q: p.q || DEPT_TO_SQUAD[p.d] || 'Stark', place: 3, isTied: idx > 0
+          });
+        });
+      } else {
+        next.push({ n: '', s: 4, d: 'EEE', q: 'Stark', place: 3 });
+      }
+      setWinners(next);
     } else {
+      setIsGroup(isKnownGroupEvent(selectedEvent));
       setWinners([
-        { n: '', s: 4, d: 'CSE', q: 'Lannister' },
-        { n: '', s: 4, d: 'ME', q: 'Targaryen' },
-        { n: '', s: 4, d: 'EEE', q: 'Stark' },
+        { n: '', s: 4, d: 'CSE', q: 'Lannister', place: 1 },
+        { n: '', s: 4, d: 'ME', q: 'Targaryen', place: 2 },
+        { n: '', s: 4, d: 'EEE', q: 'Stark', place: 3 },
       ]);
     }
   }, [selectedEvent, results]);
@@ -267,6 +279,19 @@ export default function AdminPanel() {
     });
   };
 
+  // Add custom tied 3rd place card
+  const handleAddTiedThird = () => {
+    setWinners((prev) => [
+      ...prev,
+      { n: '', s: 4, d: 'CE', q: 'Stark', place: 3, isTied: true },
+    ]);
+  };
+
+  // Remove tied 3rd place card
+  const handleRemoveTiedThird = (idx) => {
+    setWinners((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   // Save event winners
   const handleSaveWinners = async (e) => {
     e.preventDefault();
@@ -277,13 +302,14 @@ export default function AdminPanel() {
     try {
       const winnersPayload = winners.map((w, idx) => ({
         ...w,
-        place: idx + 1,
+        place: typeof w.place === 'number' ? w.place : (idx >= 2 ? 3 : idx + 1),
       }));
       const res = await adminFetch('/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventName: selectedEvent,
+          isGroup,
           winners: winnersPayload,
         }),
       });
@@ -297,8 +323,8 @@ export default function AdminPanel() {
         if (!data.isManual && data.points) setManualScores(data.points);
         showToast(
           data.isManual
-            ? `Results saved for ${selectedEvent}! (Leaderboard is currently in Manual Mode)`
-            : `Results updated for ${selectedEvent}! Leaderboard auto-refreshed.`
+            ? `Results saved for ${selectedEvent} (${isGroup ? 'Group Program' : 'Individual'})! (Leaderboard is in Manual Mode)`
+            : `Results updated for ${selectedEvent} (${isGroup ? 'Group Program' : 'Individual'})! Leaderboard auto-refreshed.`
         );
       } else {
         showToast(data.error || 'Failed to save results');
@@ -602,7 +628,7 @@ export default function AdminPanel() {
           <div className="adm-section-head">
             <div>
               <h2>Results &amp; Hall of Fame Manager</h2>
-              <p>Record event winners. <b>Only 1st place is mandatory</b> &mdash; 2nd and 3rd place are optional (leave blank if disqualified or not awarded). Squad points calculate automatically!</p>
+              <p>Record event winners. Choose whether it is an <b>Individual (5 / 3 / 2 pts)</b> or <b>Group Program (10 / 5 / 3 pts)</b>. Only 1st place is mandatory. If two students/teams tie for 3rd place, the total points are automatically split!</p>
             </div>
           </div>
 
@@ -612,7 +638,7 @@ export default function AdminPanel() {
               value={selectedEvent}
               onChange={(e) => setSelectedEvent(e.target.value)}
               className="adm-select"
-              style={{ fontSize: '1.1rem', marginBottom: 20 }}
+              style={{ fontSize: '1.1rem', marginBottom: 18 }}
             >
               {allEvents.map((e) => (
                 <option key={e.name} value={e.name}>
@@ -621,35 +647,90 @@ export default function AdminPanel() {
               ))}
             </select>
 
+            {/* PROGRAM TYPE SELECTOR: INDIVIDUAL VS GROUP */}
+            <div className="adm-prog-type-wrap">
+              <label className="adm-sublabel" style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--heading)' }}>
+                Program Type &amp; Points Scheme
+              </label>
+              <div className="adm-type-toggle">
+                <button
+                  type="button"
+                  className={`adm-type-btn ${!isGroup ? 'active' : ''}`}
+                  onClick={() => setIsGroup(false)}
+                >
+                  <b>👤 Individual Event</b>
+                  <span className="adm-pts-tag">1st: 5 pts &middot; 2nd: 3 pts &middot; 3rd: 2 pts (1 pt each if tied)</span>
+                </button>
+                <button
+                  type="button"
+                  className={`adm-type-btn ${isGroup ? 'active' : ''}`}
+                  onClick={() => setIsGroup(true)}
+                >
+                  <b>👥 Group Program</b>
+                  <span className="adm-pts-tag">1st: 10 pts &middot; 2nd: 5 pts &middot; 3rd: 3 pts (1.5 pts each if tied)</span>
+                </button>
+              </div>
+            </div>
+
             <form onSubmit={handleSaveWinners}>
               <div className="adm-winners-inputs">
-                {[
-                  { label: '1st Place (5 PTS)', mandatory: true },
-                  { label: '2nd Place (3 PTS)', mandatory: false },
-                  { label: '3rd Place (1 PT)', mandatory: false },
-                ].map((placeInfo, idx) => {
-                  const w = winners[idx] || { n: '', s: 4, d: 'CSE', q: 'Lannister' };
+                {winners.map((w, idx) => {
+                  const place = typeof w.place === 'number' ? w.place : (idx >= 2 ? 3 : idx + 1);
+                  const isFirst = place === 1;
+                  const isSecond = place === 2;
+                  const isThird = place === 3;
+                  const isTiedThird = Boolean(w.isTied || (isThird && idx >= 3));
+
+                  // Calculate point label
+                  const tiedCount = winners.filter(win => (win.place || 3) === 3).length;
+                  let ptLabel = '';
+                  if (isFirst) ptLabel = isGroup ? '10 PTS' : '5 PTS';
+                  else if (isSecond) ptLabel = isGroup ? '5 PTS' : '3 PTS';
+                  else if (isThird) {
+                    if (tiedCount > 1) {
+                      ptLabel = isGroup ? '1.5 PTS (Split)' : '1 PT (Split)';
+                    } else {
+                      ptLabel = isGroup ? '3 PTS' : '2 PTS';
+                    }
+                  }
+
                   const maxSem = w.d === 'MCA' ? 4 : 8;
-                  const isFirst = idx === 0;
+
                   return (
-                    <div key={idx} className={`adm-winner-row ${isFirst ? 'adm-win-req' : 'adm-win-opt'}`}>
+                    <div
+                      key={idx}
+                      className={`adm-winner-row ${isFirst ? 'adm-win-req' : isTiedThird ? 'adm-win-tied' : 'adm-win-opt'}`}
+                    >
                       <div className="adm-win-head">
                         <div className="adm-win-badge">
-                          0{idx + 1} &middot; {placeInfo.label}
+                          0{place} &middot; {place === 1 ? '1st Place' : place === 2 ? '2nd Place' : isTiedThird ? '3rd Place (Tied / Shared)' : '3rd Place'} ({ptLabel})
                         </div>
-                        <span className={`adm-win-status-tag ${isFirst ? 'req' : 'opt'}`}>
-                          {isFirst ? '★ MANDATORY' : 'OPTIONAL / DISQUALIFIED'}
-                        </span>
-                        {!isFirst && w.n && (
-                          <button
-                            type="button"
-                            onClick={() => handleClearWinner(idx)}
-                            className="adm-clear-win-btn"
-                            title="Clear / Mark as disqualified"
-                          >
-                            &times; Clear (Disqualify)
-                          </button>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span className={`adm-win-status-tag ${isFirst ? 'req' : isTiedThird ? 'tied' : 'opt'}`}>
+                            {isFirst ? '★ MANDATORY' : isTiedThird ? 'TIED 3RD PLACE' : 'OPTIONAL / DISQUALIFIED'}
+                          </span>
+                          {!isFirst && !isTiedThird && w.n && (
+                            <button
+                              type="button"
+                              onClick={() => handleClearWinner(idx)}
+                              className="adm-clear-win-btn"
+                              title="Clear / Mark as disqualified"
+                            >
+                              &times; Clear (Disqualify)
+                            </button>
+                          )}
+                          {isTiedThird && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTiedThird(idx)}
+                              className="adm-clear-win-btn"
+                              style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}
+                              title="Remove tied 3rd place card"
+                            >
+                              &times; Remove Tied Card
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="adm-win-fields">
                         <div>
@@ -658,7 +739,7 @@ export default function AdminPanel() {
                           </label>
                           <input
                             type="text"
-                            placeholder={isFirst ? 'Student Name (Mandatory)' : 'Student Name (Leave blank if disqualified)'}
+                            placeholder={isFirst ? 'Student Name (Mandatory)' : isTiedThird ? 'Tied 3rd Student Name' : 'Student Name (Leave blank if disqualified)'}
                             value={w.n}
                             onChange={(e) => handleWinnerChange(idx, 'n', e.target.value)}
                             required={isFirst}
@@ -703,8 +784,24 @@ export default function AdminPanel() {
                 })}
               </div>
 
-              <button type="submit" className="adm-btn" style={{ marginTop: 22 }}>
-                Save Winners for {selectedEvent} &rarr;
+              {/* ADD TIED 3RD PLACE BUTTON */}
+              {winners.filter(w => (w.place || 3) === 3).length < 2 && (
+                <div style={{ marginTop: 10, marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    onClick={handleAddTiedThird}
+                    className="adm-add-tied-btn"
+                  >
+                    <span>+</span> Add Tied 3rd Place Card (Split 3rd Place Points)
+                  </button>
+                  <small style={{ display: 'block', color: 'var(--muted)', fontSize: '0.74rem', marginTop: 4 }}>
+                    Use when two students or teams share 3rd place. Points ({isGroup ? '3 pts' : '2 pts'}) will be split equally ({isGroup ? '1.5 pts each' : '1 pt each'}).
+                  </small>
+                </div>
+              )}
+
+              <button type="submit" className="adm-btn" style={{ marginTop: 20 }}>
+                Save Winners for {selectedEvent} ({isGroup ? 'Group Program' : 'Individual'}) &rarr;
               </button>
             </form>
           </div>

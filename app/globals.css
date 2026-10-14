@@ -208,6 +208,7 @@ nav{display:grid;grid-template-columns:1fr auto 1fr}nav .logo{justify-self:start
 .pl.dim{opacity:.26;border-color:transparent;border-left-color:transparent!important;filter:grayscale(65%);transition:opacity .3s,filter .3s}
 .pl.dim:hover{opacity:.72;filter:none}
 .bd{display:none;font-size:.65rem;font-weight:700;color:var(--m);border:1px solid var(--m);border-radius:6px;padding:1px 6px}
+.pl-col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .pl-pos-0{grid-column:2}
 .pl-pos-1{grid-column:3}
 .pl-pos-2{grid-column:4}
@@ -496,11 +497,23 @@ footer li:before{content:"• ";color:var(--accent2)}
 .adm-winner-row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;transition:border-color .2s}
 .adm-winner-row.adm-win-req{border-left:4px solid var(--accent2)}
 .adm-winner-row.adm-win-opt{border-left:4px solid var(--muted);opacity:.95}
+.adm-winner-row.adm-win-tied{border-left:4px solid #cd7f32;background:rgba(205,127,50,0.04)}
+.adm-prog-type-wrap{margin-bottom:20px;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.adm-type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.adm-type-btn{all:unset;cursor:pointer;padding:12px 16px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);display:flex;flex-direction:column;gap:4px;transition:all .2s;text-align:left}
+.adm-type-btn:hover{border-color:var(--accent2);background:rgba(255,255,255,0.03)}
+.adm-type-btn.active{background:rgba(224,69,59,0.12);border-color:var(--accent2);box-shadow:0 0 12px rgba(224,69,59,0.2)}
+.adm-type-btn b{font-size:.92rem;color:var(--heading);display:flex;align-items:center;gap:6px}
+.adm-type-btn.active b{color:var(--accent2)}
+.adm-type-btn .adm-pts-tag{font-size:.72rem;color:var(--muted);font-weight:600}
+.adm-add-tied-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(205,127,50,0.12);border:1px dashed #cd7f32;color:#e89f55;border-radius:10px;font-size:.85rem;font-weight:700;margin-top:10px;transition:all .2s}
+.adm-add-tied-btn:hover{background:#cd7f32;color:#fff}
 .adm-win-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .adm-win-badge{font-size:.75rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin-bottom:0}
 .adm-win-status-tag{font-size:.65rem;font-weight:800;letter-spacing:.06em;padding:2px 8px;border-radius:12px;text-transform:uppercase}
 .adm-win-status-tag.req{background:rgba(224,69,59,0.15);color:var(--accent2);border:1px solid rgba(224,69,59,0.3)}
 .adm-win-status-tag.opt{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid var(--line)}
+.adm-win-status-tag.tied{background:rgba(205,127,50,0.15);color:#e89f55;border:1px solid rgba(205,127,50,0.35)}
 .adm-clear-win-btn{all:unset;cursor:pointer;font-size:.7rem;font-weight:700;color:#ff6b6b;background:rgba(224,69,59,0.1);padding:2px 8px;border-radius:6px;border:1px solid rgba(224,69,59,0.25);transition:all .15s}
 .adm-clear-win-btn:hover{background:var(--accent2);color:#fff}
 .adm-win-fields{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;align-items:flex-end}

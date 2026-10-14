@@ -85,7 +85,7 @@ export default function ResultsPage() {
             <option value="">Squad</option>{SQN.map((n) => <option key={n} value={n}>{n} ({SQ[n].d.join(', ')})</option>)}
           </select>
           <select aria-label="Semester" value={sem} onChange={(e) => setSem(e.target.value)}>
-            <option value="">Semester</option>{[1, 2, 3, 4, 5, 6, 7].map((i) => <option key={i} value={i}>S{i}</option>)}
+            <option value="">Semester</option>{[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <option key={i} value={i}>S{i}</option>)}
           </select>
         </div>
         <div className="rcount" id="rcount">{list.length} of {rows.length} events</div>
@@ -95,19 +95,56 @@ export default function ResultsPage() {
               <div className="rh"><span>Event</span><span>1st</span><span>2nd</span><span>3rd</span></div>
               {list.map((r) => {
                 const head = r.t !== last ? <div className="rg" key={'g' + r.t}>{(last = r.t)}</div> : null;
+                const p1s = r.p.filter((p, i) => (p.place || i + 1) === 1);
+                const p2s = r.p.filter((p, i) => (p.place || i + 1) === 2);
+                const p3s = r.p.filter((p, i) => (p.place || i + 1) === 3);
+
                 return [head,
                   <div className="rr" key={r.n} style={{ animationDelay: Math.min(k++, 12) * 0.04 + 's' }}>
-                    <div className="re"><h3>{r.n}</h3><span className="chip">{r.t}</span></div>
-                    {r.p.map((p, idx) => {
-                      const placeIdx = typeof p.place === 'number' && p.place >= 1 && p.place <= 3 ? p.place - 1 : idx;
-                      return (
-                        <div key={idx} className={`pl r${placeIdx} pl-pos-${placeIdx}${ok(p) ? '' : ' dim'}`}>
-                          <b className="bd">{MED[placeIdx]}</b>
-                          <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
-                          <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
-                        </div>
-                      );
-                    })}
+                    <div className="re">
+                      <h3>{r.n}</h3>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                        <span className="chip">{r.t}</span>
+                        {r.isGroup && (
+                          <span className="chip" style={{ color: '#e5b842', borderColor: 'rgba(229,184,66,0.4)', background: 'rgba(229,184,66,0.1)' }}>
+                            Group
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {p1s.length > 0 && (
+                      <div className="pl-col pl-pos-0">
+                        {p1s.map((p, idx) => (
+                          <div key={idx} className={`pl r0${ok(p) ? '' : ' dim'}`}>
+                            <b className="bd">1st</b>
+                            <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
+                            <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {p2s.length > 0 && (
+                      <div className="pl-col pl-pos-1">
+                        {p2s.map((p, idx) => (
+                          <div key={idx} className={`pl r1${ok(p) ? '' : ' dim'}`}>
+                            <b className="bd">2nd</b>
+                            <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
+                            <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {p3s.length > 0 && (
+                      <div className="pl-col pl-pos-2">
+                        {p3s.map((p, idx) => (
+                          <div key={idx} className={`pl r2${ok(p) ? '' : ' dim'}`}>
+                            <b className="bd">3rd{p3s.length > 1 ? ' (Tied)' : ''}</b>
+                            <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
+                            <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>];
               })}
             </>

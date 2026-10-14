@@ -14,11 +14,12 @@ create table if not exists public.events (
   category text not null,
   sort_order integer not null,
   status text not null default 'upcoming' check (status in ('upcoming','live','done')),
-  winners jsonb not null default '[]'::jsonb check (jsonb_typeof(winners) = 'array' and jsonb_array_length(winners) between 0 and 3)
+  winners jsonb not null default '[]'::jsonb check (jsonb_typeof(winners) = 'array' and jsonb_array_length(winners) between 0 and 6)
 );
--- Migration: allow 1, 2, or 3 winners (only 1st place mandatory) on existing setups
+-- Migration: allow up to 6 winners (including tied 3rd places) on existing setups
 alter table public.events drop constraint if exists events_winners_check;
-alter table public.events add constraint events_winners_check check (jsonb_typeof(winners) = 'array' and jsonb_array_length(winners) between 0 and 3);
+alter table public.events add constraint events_winners_check check (jsonb_typeof(winners) = 'array' and jsonb_array_length(winners) between 0 and 6);
+alter table public.events add column if not exists is_group boolean not null default false;
 
 -- Migration: split Mappila Paatu into Mappila Pattu Boys and Mappila Pattu Girls
 insert into public.events(name, category, sort_order, status)
