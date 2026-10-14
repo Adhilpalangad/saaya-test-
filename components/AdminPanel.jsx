@@ -628,7 +628,7 @@ export default function AdminPanel() {
           <div className="adm-section-head">
             <div>
               <h2>Results &amp; Hall of Fame Manager</h2>
-              <p>Record event winners. Choose whether it is an <b>Individual (5 / 3 / 2 pts)</b> or <b>Group Program (10 / 5 / 3 pts)</b>. Only 1st place is mandatory. If two students/teams tie for 3rd place, the total points are automatically split!</p>
+              <p>Record event winners. Choose whether it is an <b>Individual (5 / 3 / 1 pts)</b> or <b>Group Program (10 / 5 / 3 pts)</b>. Only 1st place is mandatory. If two students tie for 3rd place in an individual event, each receives 1 pt!</p>
             </div>
           </div>
 
@@ -659,7 +659,7 @@ export default function AdminPanel() {
                   onClick={() => setIsGroup(false)}
                 >
                   <b>👤 Individual Event</b>
-                  <span className="adm-pts-tag">1st: 5 pts &middot; 2nd: 3 pts &middot; 3rd: 2 pts (1 pt each if tied)</span>
+                  <span className="adm-pts-tag">1st: 5 pts &middot; 2nd: 3 pts &middot; 3rd: 1 pt (1 pt each if tied)</span>
                 </button>
                 <button
                   type="button"
@@ -687,10 +687,10 @@ export default function AdminPanel() {
                   if (isFirst) ptLabel = isGroup ? '10 PTS' : '5 PTS';
                   else if (isSecond) ptLabel = isGroup ? '5 PTS' : '3 PTS';
                   else if (isThird) {
-                    if (tiedCount > 1) {
-                      ptLabel = isGroup ? '1.5 PTS (Split)' : '1 PT (Split)';
+                    if (isGroup) {
+                      ptLabel = tiedCount > 1 ? '1.5 PTS (Split)' : '3 PTS';
                     } else {
-                      ptLabel = isGroup ? '3 PTS' : '2 PTS';
+                      ptLabel = tiedCount > 1 ? '1 PT Each' : '1 PT';
                     }
                   }
 
@@ -792,10 +792,10 @@ export default function AdminPanel() {
                     onClick={handleAddTiedThird}
                     className="adm-add-tied-btn"
                   >
-                    <span>+</span> Add Tied 3rd Place Card (Split 3rd Place Points)
+                    <span>+</span> Add Tied 3rd Place Card {isGroup ? '(Split 3rd Place Points)' : '(1 PT Each)'}
                   </button>
                   <small style={{ display: 'block', color: 'var(--muted)', fontSize: '0.74rem', marginTop: 4 }}>
-                    Use when two students or teams share 3rd place. Points ({isGroup ? '3 pts' : '2 pts'}) will be split equally ({isGroup ? '1.5 pts each' : '1 pt each'}).
+                    Use when two students or teams share 3rd place. Points awarded: {isGroup ? '1.5 pts each (3 pts split)' : '1 pt for each winner'}.
                   </small>
                 </div>
               )}

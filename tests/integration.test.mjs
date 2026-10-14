@@ -42,13 +42,13 @@ function adminDb(member = true) {
 }
 const request = body => new Request('http://localhost/api/test', { method: 'POST', headers: { Authorization: 'Bearer test', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
-test('leaderboard calculates 5/3/2 (individual) and 10/5/3 (group) points with tied 3rd split', async () => {
+test('leaderboard calculates 5/3/1 (individual) and 10/5/3 (group) points with 1 pt each for tied individual 3rd', async () => {
   const { calculateAutoPoints, getLeaderboardData } = await exportsOf('lib/store.js');
-  // Individual: 1st (Stark: 5), 2nd (Stark: 3), 3rd (Targaryen: 2) -> Stark: 8, Targaryen: 2
-  assert.deepEqual(JSON.parse(JSON.stringify(calculateAutoPoints([{ p: [{ q: 'Stark' }, { q: 'Stark' }, { q: 'Targaryen' }] }]))), { Targaryen: 2, Stark: 8, Lannister: 0 });
+  // Individual: 1st (Stark: 5), 2nd (Stark: 3), 3rd (Targaryen: 1) -> Stark: 8, Targaryen: 1
+  assert.deepEqual(JSON.parse(JSON.stringify(calculateAutoPoints([{ p: [{ q: 'Stark' }, { q: 'Stark' }, { q: 'Targaryen' }] }]))), { Targaryen: 1, Stark: 8, Lannister: 0 });
   // Group: 1st (Stark: 10), 2nd (Lannister: 5), 3rd (Targaryen: 3)
   assert.deepEqual(JSON.parse(JSON.stringify(calculateAutoPoints([{ isGroup: true, p: [{ q: 'Stark' }, { q: 'Lannister' }, { q: 'Targaryen' }] }]))), { Targaryen: 3, Stark: 10, Lannister: 5 });
-  // Tied 3rd place for Individual: 2 pts split equally -> 1 pt each
+  // Tied 3rd place for Individual: 1 pt awarded to each -> Stark gets 5 + 1 = 6, Targaryen gets 1
   assert.deepEqual(JSON.parse(JSON.stringify(calculateAutoPoints([{
     p: [
       { q: 'Stark', place: 1 },
@@ -170,13 +170,13 @@ test('published winners update the public leaderboard; manual override and reset
   assert.equal(saved.status, 200);
   body = await saved.json();
   assert.equal(body.results[0].p[0].q, 'Stark', 'squad derives from department, ignoring an injected squad');
-  assert.deepEqual(body.points, { Targaryen: 2, Stark: 5, Lannister: 3 });
+  assert.deepEqual(body.points, { Targaryen: 1, Stark: 5, Lannister: 3 });
   body = await (await POST(request({ action: 'set_manual_points', points: { Targaryen: 50, Stark: 40, Lannister: 30 } }))).json();
   assert.equal(body.isManual, true);
   assert.equal(body.points.Targaryen, 50);
   body = await (await POST(request({ action: 'reset_to_auto' }))).json();
   assert.equal(body.isManual, false);
-  assert.deepEqual(body.points, { Targaryen: 2, Stark: 5, Lannister: 3 });
+  assert.deepEqual(body.points, { Targaryen: 1, Stark: 5, Lannister: 3 });
 });
 test('an admin event status save is visible in the next public read', async () => {
   currentDb = savedDataDb();
@@ -206,7 +206,7 @@ test('winner upload requires only 1st place; 2nd and 3rd optional for disqualifi
   assert.equal(singleBody.points.Lannister, 5);
   assert.equal(singleBody.points.Stark, 0);
 
-  // Saving 1st and 3rd place (2nd disqualified) awards 5 pts and 2 pts for individual
+  // Saving 1st and 3rd place (2nd disqualified) awards 5 pts and 1 pt for individual
   const sparseRes = await POST(request({
     eventName: 'Oppana',
     winners: [
@@ -219,7 +219,7 @@ test('winner upload requires only 1st place; 2nd and 3rd optional for disqualifi
   const sparseBody = await sparseRes.json();
   assert.equal(sparseBody.results[0].p.length, 2);
   assert.equal(sparseBody.points.Stark, 5);
-  assert.equal(sparseBody.points.Targaryen, 2);
+  assert.equal(sparseBody.points.Targaryen, 1);
 
   // Reject when 1st place is blank or missing
   const noFirstRes = await POST(request({
@@ -254,6 +254,30 @@ test('group program awards 10/5/3 points and splits tied 3rd place (1.5 pts each
   assert.equal(groupBody.points.Stark, 10);
   assert.equal(groupBody.points.Lannister, 5);
   assert.equal(groupBody.points.Targaryen, 3); // 1.5 + 1.5 = 3
+});
+test('individual program awards 1 pt for each tied 3rd place winner', async () => {
+  currentDb = savedDataDb();
+  const { POST } = await exportsOf('app/api/results/route.js');
+
+  const indRes = await POST(request({
+    eventName: 'Elocution',
+    isGroup: false,
+    winners: [
+      { n: 'Speaker 1', d: 'EEE', s: 4, place: 1 },       // Stark -> 5 pts
+      { n: 'Speaker 2', d: 'CSE', s: 2, place: 2 },       // Lannister -> 3 pts
+      { n: 'Speaker 3A', d: 'ME', s: 4, place: 3 },       // Targaryen -> 1 pt
+      { n: 'Speaker 3B', d: 'AD', s: 2, place: 3 },       // Targaryen -> 1 pt (Total Targaryen = 2 pts)
+    ],
+  }));
+  assert.equal(indRes.status, 200);
+  const indBody = await indRes.json();
+  const elocution = indBody.results.find(r => r.n === 'Elocution');
+  assert.ok(elocution);
+  assert.equal(elocution.isGroup, false);
+  assert.equal(elocution.p.length, 4);
+  assert.equal(indBody.points.Stark, 5);
+  assert.equal(indBody.points.Lannister, 3);
+  assert.equal(indBody.points.Targaryen, 2); // 1 pt each for both tied 3rd winners
 });
 test('saving 3 places succeeds for existing events, aliases, and supports S8', async () => {
   currentDb = savedDataDb();
