@@ -116,7 +116,7 @@ export default function ResultsPage() {
                       <div className="pl-col pl-pos-0">
                         {p1s.map((p, idx) => (
                           <div key={idx} className={`pl r0${ok(p) ? '' : ' dim'}`}>
-                            <b className="bd">1st</b>
+                            <b className="bd">1st{p1s.length > 1 ? ' (Tied)' : ''}</b>
                             <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
                             <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
                           </div>
@@ -127,7 +127,7 @@ export default function ResultsPage() {
                       <div className="pl-col pl-pos-1">
                         {p2s.map((p, idx) => (
                           <div key={idx} className={`pl r1${ok(p) ? '' : ' dim'}`}>
-                            <b className="bd">2nd</b>
+                            <b className="bd">2nd{p2s.length > 1 ? ' (Tied)' : ''}</b>
                             <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
                             <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
                           </div>

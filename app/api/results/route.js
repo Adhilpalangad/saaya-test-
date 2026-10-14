@@ -144,17 +144,28 @@ export async function POST(req) {
 
       const formatWinnersForDb = (arr) => {
         if (!Array.isArray(arr) || arr.length === 0) return [];
-        const p1 = arr.find(w => w && w.place === 1) || arr[0];
-        const p2 = arr.find(w => w && w.place === 2) || null;
+        const p1List = arr.filter(w => w && w.place === 1);
+        const p2List = arr.filter(w => w && w.place === 2);
         const p3List = arr.filter(w => w && w.place === 3);
+
+        const p1 = p1List[0] || arr[0];
+        const p1Tied = p1List.length > 1 ? p1List[1] : null;
+
+        const p2 = p2List[0] || null;
+        const p2Tied = p2List.length > 1 ? p2List[1] : null;
+
         const p3 = p3List[0] || (arr.length >= 3 && arr[2]?.place !== 1 && arr[2]?.place !== 2 ? arr[2] : null);
-        const tied = p3List.length > 1 ? p3List[1] : null;
+        const p3Tied = p3List.length > 1 ? p3List[1] : null;
 
         const result = [];
-        if (p1 && p1.n?.trim()) result.push(p1);
-        if (p2 && p2.n?.trim()) result.push(p2);
+        if (p1 && p1.n?.trim()) {
+          result.push(p1Tied && p1Tied.n?.trim() ? { ...p1, tied: p1Tied } : p1);
+        }
+        if (p2 && p2.n?.trim()) {
+          result.push(p2Tied && p2Tied.n?.trim() ? { ...p2, tied: p2Tied } : p2);
+        }
         if (p3 && p3.n?.trim()) {
-          result.push(tied && tied.n?.trim() ? { ...p3, tied } : p3);
+          result.push(p3Tied && p3Tied.n?.trim() ? { ...p3, tied: p3Tied } : p3);
         }
         return result;
       };

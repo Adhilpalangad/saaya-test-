@@ -117,18 +117,30 @@ export default function AdminPanel() {
     const found = results.find((r) => r.n === selectedEvent);
     if (found && Array.isArray(found.p) && found.p.length > 0) {
       setIsGroup(Boolean(found.isGroup));
-      const p1 = found.p.find((p, i) => (p.place || i + 1) === 1);
-      const p2 = found.p.find((p, i) => (p.place || i + 1) === 2);
+      const p1s = found.p.filter((p, i) => (p.place || i + 1) === 1);
+      const p2s = found.p.filter((p, i) => (p.place || i + 1) === 2);
       const p3s = found.p.filter((p, i) => (p.place || i + 1) === 3);
 
       const next = [];
-      next.push(p1 ? {
-        n: p1.n || '', s: p1.s || 4, d: p1.d || 'CSE', q: p1.q || DEPT_TO_SQUAD[p1.d] || 'Lannister', place: 1
-      } : { n: '', s: 4, d: 'CSE', q: 'Lannister', place: 1 });
+      if (p1s.length > 0) {
+        p1s.forEach((p, idx) => {
+          next.push({
+            n: p.n || '', s: p.s || 4, d: p.d || 'CSE', q: p.q || DEPT_TO_SQUAD[p.d] || 'Lannister', place: 1, isTied: idx > 0
+          });
+        });
+      } else {
+        next.push({ n: '', s: 4, d: 'CSE', q: 'Lannister', place: 1 });
+      }
 
-      next.push(p2 ? {
-        n: p2.n || '', s: p2.s || 4, d: p2.d || 'ME', q: p2.q || DEPT_TO_SQUAD[p2.d] || 'Targaryen', place: 2
-      } : { n: '', s: 4, d: 'ME', q: 'Targaryen', place: 2 });
+      if (p2s.length > 0) {
+        p2s.forEach((p, idx) => {
+          next.push({
+            n: p.n || '', s: p.s || 4, d: p.d || 'ME', q: p.q || DEPT_TO_SQUAD[p.d] || 'Targaryen', place: 2, isTied: idx > 0
+          });
+        });
+      } else {
+        next.push({ n: '', s: 4, d: 'ME', q: 'Targaryen', place: 2 });
+      }
 
       if (p3s.length > 0) {
         p3s.forEach((p, idx) => {
@@ -279,23 +291,39 @@ export default function AdminPanel() {
     });
   };
 
-  // Add custom tied 3rd place card
-  const handleAddTiedThird = () => {
-    setWinners((prev) => [
-      ...prev,
-      { n: '', s: 4, d: 'CE', q: 'Stark', place: 3, isTied: true },
-    ]);
+  // Add custom tied place card (for 1st, 2nd, or 3rd place)
+  const handleAddTiedPlace = (targetPlace) => {
+    setWinners((prev) => {
+      let insertIdx = -1;
+      for (let i = 0; i < prev.length; i++) {
+        const p = typeof prev[i].place === 'number' ? prev[i].place : (i >= 2 ? 3 : i + 1);
+        if (p === targetPlace) {
+          insertIdx = i;
+        }
+      }
+      const defaultDept = targetPlace === 1 ? 'CSE' : targetPlace === 2 ? 'ME' : 'EEE';
+      const defaultSquad = DEPT_TO_SQUAD[defaultDept] || 'Lannister';
+      const newCard = { n: '', s: 4, d: defaultDept, q: defaultSquad, place: targetPlace, isTied: true };
+
+      if (insertIdx === -1) {
+        return [...prev, newCard];
+      }
+      const copy = [...prev];
+      copy.splice(insertIdx + 1, 0, newCard);
+      return copy;
+    });
   };
 
-  // Remove tied 3rd place card
-  const handleRemoveTiedThird = (idx) => {
+  // Remove tied place card
+  const handleRemoveTiedWinner = (idx) => {
     setWinners((prev) => prev.filter((_, i) => i !== idx));
   };
 
   // Save event winners
   const handleSaveWinners = async (e) => {
     e.preventDefault();
-    if (!winners[0]?.n?.trim()) {
+    const primaryFirst = winners.find(w => (w.place === 1 || !w.place) && !w.isTied) || winners.find(w => w.place === 1) || winners[0];
+    if (!primaryFirst?.n?.trim()) {
       showToast('1st Place winner is mandatory.');
       return;
     }
@@ -676,40 +704,51 @@ export default function AdminPanel() {
               <div className="adm-winners-inputs">
                 {winners.map((w, idx) => {
                   const place = typeof w.place === 'number' ? w.place : (idx >= 2 ? 3 : idx + 1);
-                  const isFirst = place === 1;
-                  const isSecond = place === 2;
-                  const isThird = place === 3;
-                  const isTiedThird = Boolean(w.isTied || (isThird && idx >= 3));
+                  const isTied = Boolean(w.isTied);
+                  const isPrimaryFirst = place === 1 && !isTied;
 
-                  // Calculate point label
-                  const tiedCount = winners.filter(win => (win.place || 3) === 3).length;
+                  // Count how many winners exist for this place
+                  const placeCount = winners.filter(win => (typeof win.place === 'number' ? win.place : 1) === place).length;
+
                   let ptLabel = '';
-                  if (isFirst) ptLabel = isGroup ? '10 PTS' : '5 PTS';
-                  else if (isSecond) ptLabel = isGroup ? '5 PTS' : '3 PTS';
-                  else if (isThird) {
-                    if (isGroup) {
-                      ptLabel = tiedCount > 1 ? '1.5 PTS (Split)' : '3 PTS';
+                  if (place === 1) {
+                    if (placeCount > 1) {
+                      ptLabel = isGroup ? '5 PTS (Split)' : '2.5 PTS (Split)';
                     } else {
-                      ptLabel = tiedCount > 1 ? '1 PT Each' : '1 PT';
+                      ptLabel = isGroup ? '10 PTS' : '5 PTS';
+                    }
+                  } else if (place === 2) {
+                    if (placeCount > 1) {
+                      ptLabel = isGroup ? '2.5 PTS (Split)' : '1.5 PTS (Split)';
+                    } else {
+                      ptLabel = isGroup ? '5 PTS' : '3 PTS';
+                    }
+                  } else if (place === 3) {
+                    if (placeCount > 1) {
+                      ptLabel = isGroup ? '1.5 PTS (Split)' : '1 PT Each';
+                    } else {
+                      ptLabel = isGroup ? '3 PTS' : '1 PT';
                     }
                   }
 
+                  const placeSuffix = place === 1 ? '1st Place' : place === 2 ? '2nd Place' : '3rd Place';
+                  const title = isTied ? `${placeSuffix} (Tied / Shared)` : placeSuffix;
                   const maxSem = w.d === 'MCA' ? 4 : 8;
 
                   return (
                     <div
                       key={idx}
-                      className={`adm-winner-row ${isFirst ? 'adm-win-req' : isTiedThird ? 'adm-win-tied' : 'adm-win-opt'}`}
+                      className={`adm-winner-row ${isPrimaryFirst ? 'adm-win-req' : isTied ? `adm-win-tied adm-win-tied-${place}` : 'adm-win-opt'}`}
                     >
                       <div className="adm-win-head">
                         <div className="adm-win-badge">
-                          0{place} &middot; {place === 1 ? '1st Place' : place === 2 ? '2nd Place' : isTiedThird ? '3rd Place (Tied / Shared)' : '3rd Place'} ({ptLabel})
+                          0{place} &middot; {title} ({ptLabel})
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span className={`adm-win-status-tag ${isFirst ? 'req' : isTiedThird ? 'tied' : 'opt'}`}>
-                            {isFirst ? '★ MANDATORY' : isTiedThird ? 'TIED 3RD PLACE' : 'OPTIONAL / DISQUALIFIED'}
+                          <span className={`adm-win-status-tag ${isPrimaryFirst ? 'req' : isTied ? `tied tied-${place}` : 'opt'}`}>
+                            {isPrimaryFirst ? '★ MANDATORY' : isTied ? `TIED ${place === 1 ? '1ST' : place === 2 ? '2ND' : '3RD'} PLACE` : 'OPTIONAL / DISQUALIFIED'}
                           </span>
-                          {!isFirst && !isTiedThird && w.n && (
+                          {!isPrimaryFirst && !isTied && w.n && (
                             <button
                               type="button"
                               onClick={() => handleClearWinner(idx)}
@@ -719,13 +758,13 @@ export default function AdminPanel() {
                               &times; Clear (Disqualify)
                             </button>
                           )}
-                          {isTiedThird && (
+                          {isTied && (
                             <button
                               type="button"
-                              onClick={() => handleRemoveTiedThird(idx)}
+                              onClick={() => handleRemoveTiedWinner(idx)}
                               className="adm-clear-win-btn"
                               style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)' }}
-                              title="Remove tied 3rd place card"
+                              title={`Remove tied ${placeSuffix} card`}
                             >
                               &times; Remove Tied Card
                             </button>
@@ -735,14 +774,14 @@ export default function AdminPanel() {
                       <div className="adm-win-fields">
                         <div>
                           <label className="adm-sublabel">
-                            Student Name {isFirst ? <span style={{ color: '#e0453b', fontWeight: 'bold' }}>*</span> : <span style={{ opacity: 0.65 }}>(Optional)</span>}
+                            Student Name {isPrimaryFirst ? <span style={{ color: '#e0453b', fontWeight: 'bold' }}>*</span> : <span style={{ opacity: 0.65 }}>(Optional)</span>}
                           </label>
                           <input
                             type="text"
-                            placeholder={isFirst ? 'Student Name (Mandatory)' : isTiedThird ? 'Tied 3rd Student Name' : 'Student Name (Leave blank if disqualified)'}
+                            placeholder={isPrimaryFirst ? 'Student Name (Mandatory)' : isTied ? `Tied ${placeSuffix} Student Name` : 'Student Name (Leave blank if disqualified)'}
                             value={w.n}
                             onChange={(e) => handleWinnerChange(idx, 'n', e.target.value)}
-                            required={isFirst}
+                            required={isPrimaryFirst}
                             className="adm-input"
                           />
                         </div>
@@ -784,21 +823,41 @@ export default function AdminPanel() {
                 })}
               </div>
 
-              {/* ADD TIED 3RD PLACE BUTTON */}
-              {winners.filter(w => (w.place || 3) === 3).length < 2 && (
-                <div style={{ marginTop: 10, marginBottom: 8 }}>
-                  <button
-                    type="button"
-                    onClick={handleAddTiedThird}
-                    className="adm-add-tied-btn"
-                  >
-                    <span>+</span> Add Tied 3rd Place Card {isGroup ? '(Split 3rd Place Points)' : '(1 PT Each)'}
-                  </button>
-                  <small style={{ display: 'block', color: 'var(--muted)', fontSize: '0.74rem', marginTop: 4 }}>
-                    Use when two students or teams share 3rd place. Points awarded: {isGroup ? '1.5 pts each (3 pts split)' : '1 pt for each winner'}.
-                  </small>
+              {/* ADD TIED PLACE BUTTONS */}
+              <div style={{ marginTop: 14, marginBottom: 8 }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {winners.filter(w => (w.place || 1) === 1).length < 2 && (
+                    <button
+                      type="button"
+                      onClick={() => handleAddTiedPlace(1)}
+                      className="adm-add-tied-btn tied-btn-1"
+                    >
+                      <span>+</span> Add Tied 1st Place Card
+                    </button>
+                  )}
+                  {winners.filter(w => (w.place || 2) === 2).length < 2 && (
+                    <button
+                      type="button"
+                      onClick={() => handleAddTiedPlace(2)}
+                      className="adm-add-tied-btn tied-btn-2"
+                    >
+                      <span>+</span> Add Tied 2nd Place Card
+                    </button>
+                  )}
+                  {winners.filter(w => (w.place || 3) === 3).length < 2 && (
+                    <button
+                      type="button"
+                      onClick={() => handleAddTiedPlace(3)}
+                      className="adm-add-tied-btn tied-btn-3"
+                    >
+                      <span>+</span> Add Tied 3rd Place Card
+                    </button>
+                  )}
                 </div>
-              )}
+                <small style={{ display: 'block', color: 'var(--muted)', fontSize: '0.74rem', marginTop: 6 }}>
+                  Add a custom tied place card if two students or teams share 1st, 2nd, or 3rd place. Points are automatically distributed according to the selected program type.
+                </small>
+              </div>
 
               <button type="submit" className="adm-btn" style={{ marginTop: 20 }}>
                 Save Winners for {selectedEvent} ({isGroup ? 'Group Program' : 'Individual'}) &rarr;

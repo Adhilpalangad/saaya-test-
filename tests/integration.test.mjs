@@ -392,5 +392,69 @@ test('saving Mappila Pattu Girls with two 3rd places succeeds even when events t
   assert.equal(readGirls.p.length, 4);
 });
 
+test('supports tied 1st and tied 2nd place winners with correct split points', async () => {
+  currentDb = savedDataDb();
+  const { POST, GET } = await exportsOf('app/api/results/route.js');
+
+  // Test 1: Individual event with tied 1st place (5 pts split to 2.5 each) and tied 2nd place (3 pts split to 1.5 each)
+  const indRes = await POST(request({
+    eventName: 'English Poem Recitation',
+    isGroup: false,
+    winners: [
+      { n: 'Poet 1A', d: 'CSE', s: 4, place: 1 }, // Lannister -> 2.5 pts
+      { n: 'Poet 1B', d: 'EEE', s: 4, place: 1 }, // Stark -> 2.5 pts
+      { n: 'Poet 2A', d: 'ME', s: 4, place: 2 },  // Targaryen -> 1.5 pts
+      { n: 'Poet 2B', d: 'AD', s: 2, place: 2 },  // Targaryen -> 1.5 pts
+      { n: 'Poet 3', d: 'CSE', s: 2, place: 3 },   // Lannister -> 1 pt
+    ],
+  }));
+  assert.equal(indRes.status, 200);
+  const indBody = await indRes.json();
+  const indEvent = indBody.results.find(r => r.n === 'English Poem Recitation');
+  assert.ok(indEvent, 'English Poem Recitation must be saved');
+  assert.equal(indEvent.p.length, 5, 'Should have all 5 winners unpacked');
+  
+  // Lannister: 2.5 (tied 1st) + 1 (3rd) = 3.5 pts
+  // Stark: 2.5 (tied 1st) = 2.5 pts
+  // Targaryen: 1.5 + 1.5 = 3 pts
+  assert.equal(indBody.points.Lannister, 3.5);
+  assert.equal(indBody.points.Stark, 2.5);
+  assert.equal(indBody.points.Targaryen, 3);
+
+  // Test 2: Group event with tied 1st (10 pts split -> 5 pts each) and tied 2nd (5 pts split -> 2.5 pts each)
+  const groupRes = await POST(request({
+    eventName: 'Group Song',
+    isGroup: true,
+    winners: [
+      { n: 'Singers 1A', d: 'CSE', s: 4, place: 1 }, // Lannister -> 5 pts
+      { n: 'Singers 1B', d: 'EEE', s: 4, place: 1 }, // Stark -> 5 pts
+      { n: 'Singers 2A', d: 'ME', s: 4, place: 2 },  // Targaryen -> 2.5 pts
+      { n: 'Singers 2B', d: 'CE', s: 4, place: 2 },  // Stark -> 2.5 pts
+      { n: 'Singers 3', d: 'ME', s: 2, place: 3 },   // Targaryen -> 3 pts
+    ],
+  }));
+  assert.equal(groupRes.status, 200);
+  const groupBody = await groupRes.json();
+  const groupEvent = groupBody.results.find(r => r.n === 'Group Song');
+  assert.ok(groupEvent, 'Group Song must be saved');
+  assert.equal(groupEvent.p.length, 5, 'Should have all 5 winners unpacked');
+
+  // Lannister: 3.5 (from previous) + 5 = 8.5
+  // Stark: 2.5 (from previous) + 5 + 2.5 = 10
+  // Targaryen: 3 (from previous) + 2.5 + 3 = 8.5
+  assert.equal(groupBody.points.Lannister, 8.5);
+  assert.equal(groupBody.points.Stark, 10);
+  assert.equal(groupBody.points.Targaryen, 8.5);
+
+  // Read back via GET
+  const readRes = await GET();
+  const readBody = await readRes.json();
+  const readInd = readBody.results.find(r => r.n === 'English Poem Recitation');
+  assert.equal(readInd.p.length, 5);
+  const readGroup = readBody.results.find(r => r.n === 'Group Song');
+  assert.equal(readGroup.p.length, 5);
+});
+
+
 
 
