@@ -826,7 +826,7 @@ export default function AdminPanel() {
               {/* ADD TIED PLACE BUTTONS */}
               <div style={{ marginTop: 14, marginBottom: 8 }}>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  {winners.filter(w => (w.place || 1) === 1).length < 2 && (
+                  {winners.filter(w => (typeof w.place === 'number' ? w.place : 1) === 1).length < 2 && (
                     <button
                       type="button"
                       onClick={() => handleAddTiedPlace(1)}
@@ -835,7 +835,7 @@ export default function AdminPanel() {
                       <span>+</span> Add Tied 1st Place Card
                     </button>
                   )}
-                  {winners.filter(w => (w.place || 2) === 2).length < 2 && (
+                  {winners.filter(w => (typeof w.place === 'number' ? w.place : 2) === 2).length < 2 && (
                     <button
                       type="button"
                       onClick={() => handleAddTiedPlace(2)}
@@ -844,7 +844,7 @@ export default function AdminPanel() {
                       <span>+</span> Add Tied 2nd Place Card
                     </button>
                   )}
-                  {winners.filter(w => (w.place || 3) === 3).length < 2 && (
+                  {winners.filter(w => (typeof w.place === 'number' ? w.place : 3) === 3).length < 2 && (
                     <button
                       type="button"
                       onClick={() => handleAddTiedPlace(3)}

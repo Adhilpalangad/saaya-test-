@@ -47,15 +47,18 @@ async function payload(db) {
             place,
             isGroup,
           });
-          if (w.tied && typeof w.tied === 'object' && typeof w.tied.n === 'string' && w.tied.n.trim()) {
-            p.push({
-              n: w.tied.n.trim(),
-              d: w.tied.d,
-              s: w.tied.s,
-              q: w.tied.q,
-              place: typeof w.tied.place === 'number' ? w.tied.place : place,
-              isGroup,
-            });
+          const tiedList = Array.isArray(w.tied) ? w.tied : (w.tied ? [w.tied] : []);
+          for (const t of tiedList) {
+            if (t && typeof t === 'object' && typeof t.n === 'string' && t.n.trim()) {
+              p.push({
+                n: t.n.trim(),
+                d: t.d,
+                s: t.s,
+                q: t.q,
+                place: typeof t.place === 'number' ? t.place : place,
+                isGroup,
+              });
+            }
           }
         }
       }
@@ -149,25 +152,25 @@ export async function POST(req) {
         const p3List = arr.filter(w => w && w.place === 3);
 
         const p1 = p1List[0] || arr[0];
-        const p1Tied = p1List.length > 1 ? p1List[1] : null;
+        const p1Tied = p1List.length > 2 ? p1List.slice(1) : (p1List.length > 1 ? p1List[1] : null);
 
         const p2 = p2List[0] || null;
-        const p2Tied = p2List.length > 1 ? p2List[1] : null;
+        const p2Tied = p2List.length > 2 ? p2List.slice(1) : (p2List.length > 1 ? p2List[1] : null);
 
         const p3 = p3List[0] || (arr.length >= 3 && arr[2]?.place !== 1 && arr[2]?.place !== 2 ? arr[2] : null);
-        const p3Tied = p3List.length > 1 ? p3List[1] : null;
+        const p3Tied = p3List.length > 2 ? p3List.slice(1) : (p3List.length > 1 ? p3List[1] : null);
 
         const result = [];
         if (p1 && p1.n?.trim()) {
-          result.push(p1Tied && p1Tied.n?.trim() ? { ...p1, tied: p1Tied } : p1);
+          result.push(p1Tied ? { ...p1, tied: p1Tied } : p1);
         }
         if (p2 && p2.n?.trim()) {
-          result.push(p2Tied && p2Tied.n?.trim() ? { ...p2, tied: p2Tied } : p2);
+          result.push(p2Tied ? { ...p2, tied: p2Tied } : p2);
         }
         if (p3 && p3.n?.trim()) {
-          result.push(p3Tied && p3Tied.n?.trim() ? { ...p3, tied: p3Tied } : p3);
+          result.push(p3Tied ? { ...p3, tied: p3Tied } : p3);
         }
-        return result;
+        return result.slice(0, 3);
       };
 
       const targetName = typeof body.eventName === 'string' ? body.eventName.trim() : '';
