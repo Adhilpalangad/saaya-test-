@@ -10,7 +10,27 @@ async function payload(db) {
     db.from('events').select('name,category,winners').order('sort_order'),
     db.from('leaderboard_settings').select('*').eq('id', 1).single(),
   ]);
-  const results = checked(events)
+  const config = checked(settings);
+  const dbEvents = checked(events);
+
+  // Merge extra events stored in leaderboard_settings fallback (e.g. when RLS blocks table insert)
+  const extraEventsMap = (config.manual_points && typeof config.manual_points === 'object')
+    ? (config.manual_points._extra_events || {})
+    : {};
+
+  const mergedEvents = [...dbEvents];
+  for (const [eName, eData] of Object.entries(extraEventsMap)) {
+    if (!mergedEvents.some(e => e.name === eName)) {
+      mergedEvents.push({
+        name: eName,
+        category: eData.category || 'Pre Stage',
+        winners: eData.winners || [],
+        is_group: Boolean(eData.isGroup),
+      });
+    }
+  }
+
+  const results = mergedEvents
     .map(r => {
       const rawWinners = Array.isArray(r.winners) ? r.winners : [];
       const isGroup = Boolean(r.is_group || rawWinners.some(w => w && typeof w === 'object' && w.isGroup));
@@ -47,8 +67,18 @@ async function payload(db) {
       };
     })
     .filter(r => r.p.length > 0);
-  const config = checked(settings);
-  const board = getLeaderboardData({ results, isManualLeaderboard: config.is_manual, manualPoints: config.manual_points });
+
+  // Clean manualPoints passed to client so _extra_events is hidden from squad points
+  const cleanManualPoints = { Targaryen: 0, Stark: 0, Lannister: 0 };
+  if (config.manual_points && typeof config.manual_points === 'object') {
+    for (const q of SQN) {
+      if (typeof config.manual_points[q] === 'number') {
+        cleanManualPoints[q] = config.manual_points[q];
+      }
+    }
+  }
+
+  const board = getLeaderboardData({ results, isManualLeaderboard: config.is_manual, manualPoints: cleanManualPoints });
   return { success: true, results, ...board, SQ, SQN };
 }
 export async function GET() {
@@ -65,6 +95,10 @@ export async function POST(req) {
         const value = Number(body.points?.[squad]);
         if (!Number.isSafeInteger(value) || value < 0 || value > 1000000) throw new ApiError('Points must be whole numbers between 0 and 1,000,000.');
         points[squad] = value;
+      }
+      const cur = await db.from('leaderboard_settings').select('manual_points').eq('id', 1).single();
+      if (cur.data?.manual_points?._extra_events) {
+        points._extra_events = cur.data.manual_points._extra_events;
       }
       checked(await db.from('leaderboard_settings').update({ manual_points: points, is_manual: true }).eq('id', 1).select().single());
     } else if (['reset_to_auto', 'recalculate', 'toggle_mode'].includes(body.action)) {
@@ -157,12 +191,52 @@ export async function POST(req) {
             order++;
           }
         }
-        let insRes = await db.from('events').insert({ name: targetName, category: cat, sort_order, winners: dbWinners }).select('name').maybeSingle();
-        if (insRes.error) {
-          insRes = await db.from('events').insert({ name: targetName, category: cat, sort_order, winners: dbWinners.slice(0, 3) }).select('name').maybeSingle();
+        const insRes = await db.from('events').insert({ name: targetName, category: cat, sort_order, winners: dbWinners }).select('name').maybeSingle();
+        if (!insRes.error && insRes.data) {
+          row = insRes.data;
+        } else {
+          // If insert failed (e.g. RLS blocks insert on events table), fallback to saving in leaderboard_settings
+          const settingsRes = await db.from('leaderboard_settings').select('*').eq('id', 1).single();
+          if (settingsRes.data) {
+            const currentPoints = settingsRes.data.manual_points || {};
+            const extraEvents = { ...(currentPoints._extra_events || {}) };
+            extraEvents[targetName] = {
+              name: targetName,
+              category: cat,
+              sort_order,
+              isGroup,
+              winners: dbWinners,
+            };
+            const updateSettings = await db.from('leaderboard_settings').update({
+              manual_points: {
+                ...currentPoints,
+                _extra_events: extraEvents,
+              },
+            }).eq('id', 1);
+            if (!updateSettings.error) {
+              row = { name: targetName };
+            } else {
+              checked(updateSettings);
+            }
+          }
         }
-        row = checked(insRes);
       }
+
+      if (row) {
+        // If event successfully lives in events table, clean up any previous fallback entry
+        const cur = await db.from('leaderboard_settings').select('manual_points').eq('id', 1).single();
+        if (cur.data?.manual_points?._extra_events?.[targetName] && updateRes.data) {
+          const nextExtra = { ...cur.data.manual_points._extra_events };
+          delete nextExtra[targetName];
+          await db.from('leaderboard_settings').update({
+            manual_points: {
+              ...cur.data.manual_points,
+              _extra_events: nextExtra,
+            },
+          }).eq('id', 1);
+        }
+      }
+
       if (!row) {
         if (updateRes.error) checked(updateRes);
         throw new ApiError('Event not found: ' + targetName, 404);

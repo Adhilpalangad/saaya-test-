@@ -330,4 +330,67 @@ test('saving 3 places succeeds for existing events, aliases, and supports S8', a
   assert.equal(vattaEvent.p.length, 3);
 });
 
+test('saving Mappila Pattu Girls with two 3rd places succeeds even when events table insert is blocked by RLS', async () => {
+  const baseDb = savedDataDb();
+  // Simulate events table throwing RLS violation on insert
+  currentDb = {
+    ...baseDb,
+    from(table) {
+      const q = baseDb.from(table);
+      if (table === 'events') {
+        const originalInsert = q.insert;
+        q.insert = () => ({
+          select: () => ({
+            maybeSingle: async () => ({
+              data: null,
+              error: { code: '42501', message: 'new row violates row-level security policy for table "events"' },
+            }),
+          }),
+        });
+      }
+      return q;
+    },
+  };
+
+  const { POST, GET } = await exportsOf('app/api/results/route.js');
+
+  // Exact payload from user screenshot:
+  // 1st: Fathima liyana (CSE, S5) -> Lannister (5 pts)
+  // 2nd: Meherin Fathima (CE, S5) -> Stark (3 pts)
+  // 3rd: Fathima shayifa (CSE, S5) -> Lannister (1 pt)
+  // 3rd (tied): Ayisha Hameema (MCA, S1) -> Stark (1 pt)
+  const saveRes = await POST(request({
+    eventName: 'Mappila Pattu Girls',
+    isGroup: false,
+    winners: [
+      { n: 'Fathima liyana', d: 'CSE', s: 5, place: 1 },
+      { n: 'Meherin Fathima', d: 'CE', s: 5, place: 2 },
+      { n: 'Fathima shayifa', d: 'CSE', s: 5, place: 3 },
+      { n: 'Ayisha Hameema', d: 'MCA', s: 1, place: 3 },
+    ],
+  }));
+  assert.equal(saveRes.status, 200);
+  const saveBody = await saveRes.json();
+  const girlsEvent = saveBody.results.find(r => r.n === 'Mappila Pattu Girls');
+  assert.ok(girlsEvent, 'Mappila Pattu Girls must be present in results');
+  assert.equal(girlsEvent.p.length, 4, 'Must contain all 4 winners');
+  assert.equal(girlsEvent.p[0].n, 'Fathima liyana');
+  assert.equal(girlsEvent.p[1].n, 'Meherin Fathima');
+  assert.equal(girlsEvent.p[2].n, 'Fathima shayifa');
+  assert.equal(girlsEvent.p[3].n, 'Ayisha Hameema');
+
+  // Verify points: Lannister = 5 + 1 = 6, Stark = 3 + 1 = 4
+  assert.equal(saveBody.points.Lannister, 6);
+  assert.equal(saveBody.points.Stark, 4);
+
+  // Subsequent GET also returns Mappila Pattu Girls with all 4 winners
+  const readRes = await GET();
+  assert.equal(readRes.status, 200);
+  const readBody = await readRes.json();
+  const readGirls = readBody.results.find(r => r.n === 'Mappila Pattu Girls');
+  assert.ok(readGirls);
+  assert.equal(readGirls.p.length, 4);
+});
+
+
 
