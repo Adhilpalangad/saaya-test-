@@ -108,40 +108,48 @@ export async function POST(req) {
         throw new ApiError('1st place winner is mandatory.');
       }
 
-      const foldCandidate = (arr) => {
-        if (arr.length < 3) return [...arr, ...Array(3 - arr.length).fill(null)];
-        if (arr.length > 3) {
-          const p1 = arr.find(w => w.place === 1) || arr[0];
-          const p2 = arr.find(w => w.place === 2) || arr[1] || null;
-          const p3List = arr.filter(w => w.place === 3);
-          const p3 = p3List[0] || arr[2] || null;
-          const tied = p3List[1] || arr[3] || null;
-          return [p1, p2, p3 ? { ...p3, tied } : null];
+      const formatWinnersForDb = (arr) => {
+        if (!Array.isArray(arr) || arr.length === 0) return [];
+        const p1 = arr.find(w => w && w.place === 1) || arr[0];
+        const p2 = arr.find(w => w && w.place === 2) || null;
+        const p3List = arr.filter(w => w && w.place === 3);
+        const p3 = p3List[0] || (arr.length >= 3 && arr[2]?.place !== 1 && arr[2]?.place !== 2 ? arr[2] : null);
+        const tied = p3List.length > 1 ? p3List[1] : null;
+
+        const result = [];
+        if (p1 && p1.n?.trim()) result.push(p1);
+        if (p2 && p2.n?.trim()) result.push(p2);
+        if (p3 && p3.n?.trim()) {
+          result.push(tied && tied.n?.trim() ? { ...p3, tied } : p3);
         }
-        return arr;
+        return result;
       };
 
-      let updateRes = await db.from('events').update({ winners }).eq('name', body.eventName).select('name').maybeSingle();
-      if (updateRes.error && updateRes.error.code === '23514') {
-        updateRes = await db.from('events').update({ winners: foldCandidate(winners) }).eq('name', body.eventName).select('name').maybeSingle();
+      const targetName = typeof body.eventName === 'string' ? body.eventName.trim() : '';
+      if (!targetName) throw new ApiError('Event name is required.');
+
+      const dbWinners = formatWinnersForDb(winners);
+
+      let updateRes = await db.from('events').update({ winners: dbWinners }).eq('name', targetName).select('name').maybeSingle();
+      if (updateRes.error) {
+        updateRes = await db.from('events').update({ winners: dbWinners.slice(0, 3) }).eq('name', targetName).select('name').maybeSingle();
       }
-      let row = checked(updateRes);
-      if (!row && (body.eventName === 'Mappila Pattu Boys' || body.eventName === 'Mappila Pattu Girls')) {
+      let row = updateRes.data;
+
+      if (!row && (targetName === 'Mappila Pattu Boys' || targetName === 'Mappila Pattu Girls')) {
         const oldCheck = await db.from('events').select('name').in('name', ['Mappila Paatu', 'Mappila Pattu']).maybeSingle();
         if (oldCheck.data?.name) {
-          let renRes = await db.from('events').update({ name: body.eventName, winners }).eq('name', oldCheck.data.name).select('name').maybeSingle();
-          if (renRes.error && renRes.error.code === '23514') {
-            renRes = await db.from('events').update({ name: body.eventName, winners: foldCandidate(winners) }).eq('name', oldCheck.data.name).select('name').maybeSingle();
-          }
-          row = checked(renRes);
+          const renRes = await db.from('events').update({ name: targetName, winners: dbWinners }).eq('name', oldCheck.data.name).select('name').maybeSingle();
+          row = renRes.data;
         }
       }
+
       if (!row) {
         let cat = 'Pre Stage', sort_order = 30;
         let order = 0;
         for (const [c, list] of Object.entries(EV)) {
           for (const item of list) {
-            if (item[0] === body.eventName) {
+            if (item[0] === targetName) {
               cat = c;
               sort_order = order;
               break;
@@ -149,13 +157,16 @@ export async function POST(req) {
             order++;
           }
         }
-        let insRes = await db.from('events').insert({ name: body.eventName, category: cat, sort_order, winners }).select('name').maybeSingle();
-        if (insRes.error && insRes.error.code === '23514') {
-          insRes = await db.from('events').insert({ name: body.eventName, category: cat, sort_order, winners: foldCandidate(winners) }).select('name').maybeSingle();
+        let insRes = await db.from('events').insert({ name: targetName, category: cat, sort_order, winners: dbWinners }).select('name').maybeSingle();
+        if (insRes.error) {
+          insRes = await db.from('events').insert({ name: targetName, category: cat, sort_order, winners: dbWinners.slice(0, 3) }).select('name').maybeSingle();
         }
         row = checked(insRes);
       }
-      if (!row) throw new ApiError('Event not found.', 404);
+      if (!row) {
+        if (updateRes.error) checked(updateRes);
+        throw new ApiError('Event not found: ' + targetName, 404);
+      }
     }
     return NextResponse.json(await payload(db));
   } catch (error) { return failure(error); }
