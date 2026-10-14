@@ -32,7 +32,7 @@ Open `/admin` and sign in with the authorized Supabase account. The old demo pas
 
 - All data API routes query Supabase rather than local JSON or uploaded files.
 - Every admin API requires a verified Supabase access token and an admin membership. Supabase row-level policies independently enforce those permissions.
-- An event save requires only 1st place (mandatory). 2nd and 3rd places are optional to accommodate disqualifications or unawarded slots. Points use the existing 5/3/1 rule and derive the squad from the department.
+- An event save requires only 1st place (mandatory). 2nd and 3rd places are optional to accommodate disqualifications or unawarded slots. Points award 5/3/2 for individual events and 10/5/3 for group programs (tied winners receive full place points without division) and derive the squad from the department.
 - Manual scores can override automatic scores. Returning to auto mode recalculates from published winners.
 - Public pages refresh every 15 seconds while visible and on refocus. No Supabase realtime connection quota is consumed.
 - Empty results and gallery responses clear the display. Data outages show an update message instead of dummy winners.

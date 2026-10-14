@@ -656,7 +656,7 @@ export default function AdminPanel() {
           <div className="adm-section-head">
             <div>
               <h2>Results &amp; Hall of Fame Manager</h2>
-              <p>Record event winners. Choose whether it is an <b>Individual (5 / 3 / 1 pts)</b> or <b>Group Program (10 / 5 / 3 pts)</b>. Only 1st place is mandatory. If two students tie for 3rd place in an individual event, each receives 1 pt!</p>
+              <p>Record event winners. Choose whether it is an <b>Individual (5 / 3 / 2 pts)</b> or <b>Group Program (10 / 5 / 3 pts)</b>. Only 1st place is mandatory. On ties, each winner receives full points (no point division)!</p>
             </div>
           </div>
 
@@ -687,7 +687,7 @@ export default function AdminPanel() {
                   onClick={() => setIsGroup(false)}
                 >
                   <b>👤 Individual Event</b>
-                  <span className="adm-pts-tag">1st: 5 pts &middot; 2nd: 3 pts &middot; 3rd: 1 pt (1 pt each if tied)</span>
+                  <span className="adm-pts-tag">1st: 5 pts &middot; 2nd: 3 pts &middot; 3rd: 2 pts (each if tied)</span>
                 </button>
                 <button
                   type="button"
@@ -695,7 +695,7 @@ export default function AdminPanel() {
                   onClick={() => setIsGroup(true)}
                 >
                   <b>👥 Group Program</b>
-                  <span className="adm-pts-tag">1st: 10 pts &middot; 2nd: 5 pts &middot; 3rd: 3 pts (1.5 pts each if tied)</span>
+                  <span className="adm-pts-tag">1st: 10 pts &middot; 2nd: 5 pts &middot; 3rd: 3 pts (each if tied)</span>
                 </button>
               </div>
             </div>
@@ -712,23 +712,11 @@ export default function AdminPanel() {
 
                   let ptLabel = '';
                   if (place === 1) {
-                    if (placeCount > 1) {
-                      ptLabel = isGroup ? '5 PTS (Split)' : '2.5 PTS (Split)';
-                    } else {
-                      ptLabel = isGroup ? '10 PTS' : '5 PTS';
-                    }
+                    ptLabel = isGroup ? (placeCount > 1 ? '10 PTS Each' : '10 PTS') : (placeCount > 1 ? '5 PTS Each' : '5 PTS');
                   } else if (place === 2) {
-                    if (placeCount > 1) {
-                      ptLabel = isGroup ? '2.5 PTS (Split)' : '1.5 PTS (Split)';
-                    } else {
-                      ptLabel = isGroup ? '5 PTS' : '3 PTS';
-                    }
+                    ptLabel = isGroup ? (placeCount > 1 ? '5 PTS Each' : '5 PTS') : (placeCount > 1 ? '3 PTS Each' : '3 PTS');
                   } else if (place === 3) {
-                    if (placeCount > 1) {
-                      ptLabel = isGroup ? '1.5 PTS (Split)' : '1 PT Each';
-                    } else {
-                      ptLabel = isGroup ? '3 PTS' : '1 PT';
-                    }
+                    ptLabel = isGroup ? (placeCount > 1 ? '3 PTS Each' : '3 PTS') : (placeCount > 1 ? '2 PTS Each' : '2 PTS');
                   }
 
                   const placeSuffix = place === 1 ? '1st Place' : place === 2 ? '2nd Place' : '3rd Place';
@@ -855,7 +843,7 @@ export default function AdminPanel() {
                   )}
                 </div>
                 <small style={{ display: 'block', color: 'var(--muted)', fontSize: '0.74rem', marginTop: 6 }}>
-                  Add a custom tied place card if two students or teams share 1st, 2nd, or 3rd place. Points are automatically distributed according to the selected program type.
+                  Add a custom tied place card if two students or teams share 1st, 2nd, or 3rd place. Each winner receives full place points according to the selected program type (no point division).
                 </small>
               </div>
 

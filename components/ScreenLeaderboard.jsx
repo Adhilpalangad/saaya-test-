@@ -139,7 +139,7 @@ export default function ScreenLeaderboard() {
     },
   ];
 
-  const defaultPointsPerRank = ['+5 PTS', '+3 PTS', '+1 PT'];
+  const defaultPointsPerRank = ['+5 PTS', '+3 PTS', '+2 PTS'];
 
   return (
     <main id="screen-view">
@@ -285,13 +285,18 @@ export default function ScreenLeaderboard() {
 
                   <div className="screen-winners-list">
                     {latestResults[0].p.map((winner, idx) => {
-                      const rankLabel = idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd';
+                      const place = typeof winner.place === 'number' && winner.place >= 1 && winner.place <= 3 ? winner.place : Math.min(idx + 1, 3);
+                      const isGrp = Boolean(latestResults[0].isGroup || winner.isGroup);
+                      const rankLabel = place === 1 ? '1st' : place === 2 ? '2nd' : '3rd';
+                      const ptsLabel = isGrp
+                        ? (place === 1 ? '+10 PTS' : place === 2 ? '+5 PTS' : '+3 PTS')
+                        : (place === 1 ? '+5 PTS' : place === 2 ? '+3 PTS' : '+2 PTS');
                       const squadInfo = squadStyles[winner.q] || { color: '#e0453b' };
 
                       return (
-                        <div key={idx} className={`screen-winner-row p-${idx + 1}`}>
+                        <div key={idx} className={`screen-winner-row p-${place}`}>
                           <div className="screen-winner-left">
-                            <span className={`screen-winner-pos-tag pos-${idx + 1}`}>
+                            <span className={`screen-winner-pos-tag pos-${place}`}>
                               {rankLabel}
                             </span>
                             <div className="screen-winner-details">
@@ -305,7 +310,7 @@ export default function ScreenLeaderboard() {
                             </div>
                           </div>
                           <span className="screen-winner-pts">
-                            {defaultPointsPerRank[idx] || '+1 PT'}
+                            {ptsLabel}
                           </span>
                         </div>
                       );
@@ -332,13 +337,18 @@ export default function ScreenLeaderboard() {
 
                   <div className="screen-winners-list">
                     {latestResults[1].p.map((winner, idx) => {
-                      const rankLabel = idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd';
+                      const place = typeof winner.place === 'number' && winner.place >= 1 && winner.place <= 3 ? winner.place : Math.min(idx + 1, 3);
+                      const isGrp = Boolean(latestResults[1].isGroup || winner.isGroup);
+                      const rankLabel = place === 1 ? '1st' : place === 2 ? '2nd' : '3rd';
+                      const ptsLabel = isGrp
+                        ? (place === 1 ? '+10 PTS' : place === 2 ? '+5 PTS' : '+3 PTS')
+                        : (place === 1 ? '+5 PTS' : place === 2 ? '+3 PTS' : '+2 PTS');
                       const squadInfo = squadStyles[winner.q] || { color: '#e0453b' };
 
                       return (
-                        <div key={idx} className={`screen-winner-row p-${idx + 1}`}>
+                        <div key={idx} className={`screen-winner-row p-${place}`}>
                           <div className="screen-winner-left">
-                            <span className={`screen-winner-pos-tag pos-${idx + 1}`}>
+                            <span className={`screen-winner-pos-tag pos-${place}`}>
                               {rankLabel}
                             </span>
                             <div className="screen-winner-details">
@@ -352,7 +362,7 @@ export default function ScreenLeaderboard() {
                             </div>
                           </div>
                           <span className="screen-winner-pts">
-                            {defaultPointsPerRank[idx] || '+1 PT'}
+                            {ptsLabel}
                           </span>
                         </div>
                       );
