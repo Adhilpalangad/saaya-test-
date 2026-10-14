@@ -100,7 +100,10 @@ test('gallery rejects arbitrary assets before contacting Cloudinary', async () =
 function savedDataDb() {
   const records = {
     admins: [{ user_id: 'admin-id' }],
-    events: [{ name: 'Oppana', category: 'On Stage', status: 'upcoming', sort_order: 0, winners: [] }],
+    events: [
+      { name: 'Oppana', category: 'On Stage', status: 'upcoming', sort_order: 0, winners: [] },
+      { name: 'Mappila Paatu', category: 'Pre Stage', status: 'upcoming', sort_order: 30, winners: [] },
+    ],
     leaderboard_settings: [{ id: 1, is_manual: false, manual_points: { Targaryen: 0, Stark: 0, Lannister: 0 } }],
     gallery: [],
   };
@@ -109,14 +112,21 @@ function savedDataDb() {
     from(table) {
       let values, filter;
       const execute = () => {
-        const rows = records[table].filter(row => !filter || row[filter[0]] === filter[1]);
+        const rows = records[table].filter(row => {
+          if (!filter) return true;
+          if (filter.type === 'eq') return row[filter.col] === filter.val;
+          if (filter.type === 'in') return filter.val.includes(row[filter.col]);
+          return true;
+        });
         if (values) for (const row of rows) Object.assign(row, values);
         return { data: rows, error: null };
       };
       const query = {
         select: () => query,
         update: next => { values = next; return query; },
-        eq: (column, value) => { filter = [column, value]; return query; },
+        insert: next => { records[table].push(next); return query; },
+        eq: (col, val) => { filter = { type: 'eq', col, val }; return query; },
+        in: (col, val) => { filter = { type: 'in', col, val }; return query; },
         order: async () => execute(),
         single: async () => ({ data: execute().data[0], error: null }),
         maybeSingle: async () => ({ data: execute().data[0] || null, error: null }),
@@ -198,4 +208,55 @@ test('winner upload requires only 1st place; 2nd and 3rd optional for disqualifi
   }));
   assert.equal(noFirstRes.status, 400);
 });
+test('saving 3 places succeeds for existing events, aliases, and supports S8', async () => {
+  currentDb = savedDataDb();
+  const { POST } = await exportsOf('app/api/results/route.js');
+
+  // Saving 3 places including an S8 winner succeeds
+  const res3 = await POST(request({
+    eventName: 'Oppana',
+    winners: [
+      { n: 'Gold Winner', d: 'CSE', s: 8, place: 1 },
+      { n: 'Silver Winner', d: 'ME', s: 6, place: 2 },
+      { n: 'Bronze Winner', d: 'EEE', s: 4, place: 3 },
+    ],
+  }));
+  assert.equal(res3.status, 200);
+  const body3 = await res3.json();
+  const oppana = body3.results.find(r => r.n === 'Oppana');
+  assert.equal(oppana.p.length, 3);
+  assert.equal(oppana.p[0].s, 8);
+  assert.equal(oppana.p[0].n, 'Gold Winner');
+
+  // Saving 3 places for Mappila Pattu Boys renames old Mappila Paatu row
+  const mappilaRes = await POST(request({
+    eventName: 'Mappila Pattu Boys',
+    winners: [
+      { n: 'Boy 1', d: 'ME', s: 4, place: 1 },
+      { n: 'Boy 2', d: 'CSE', s: 2, place: 2 },
+      { n: 'Boy 3', d: 'AD', s: 6, place: 3 },
+    ],
+  }));
+  assert.equal(mappilaRes.status, 200);
+  const mappilaBody = await mappilaRes.json();
+  const mappilaEvent = mappilaBody.results.find(r => r.n === 'Mappila Pattu Boys');
+  assert.ok(mappilaEvent, 'Mappila Pattu Boys should be present in results');
+  assert.equal(mappilaEvent.p.length, 3);
+
+  // Saving 3 places for unseeded event inserts it dynamically
+  const unseededRes = await POST(request({
+    eventName: 'Vattapattu',
+    winners: [
+      { n: 'Lead 1', d: 'CE', s: 2, place: 1 },
+      { n: 'Lead 2', d: 'MCA', s: 4, place: 2 },
+      { n: 'Lead 3', d: 'ECE', s: 6, place: 3 },
+    ],
+  }));
+  assert.equal(unseededRes.status, 200);
+  const unseededBody = await unseededRes.json();
+  const vattaEvent = unseededBody.results.find(r => r.n === 'Vattapattu');
+  assert.ok(vattaEvent, 'Vattapattu should be inserted and present in results');
+  assert.equal(vattaEvent.p.length, 3);
+});
+
 
