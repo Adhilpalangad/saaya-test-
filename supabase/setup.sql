@@ -14,8 +14,21 @@ create table if not exists public.events (
   category text not null,
   sort_order integer not null,
   status text not null default 'upcoming' check (status in ('upcoming','live','done')),
-  winners jsonb not null default '[]'::jsonb check (jsonb_typeof(winners) = 'array' and jsonb_array_length(winners) in (0,3))
+  winners jsonb not null default '[]'::jsonb check (jsonb_typeof(winners) = 'array' and jsonb_array_length(winners) between 0 and 3)
 );
+-- Migration: allow 1, 2, or 3 winners (only 1st place mandatory) on existing setups
+alter table public.events drop constraint if exists events_winners_check;
+alter table public.events add constraint events_winners_check check (jsonb_typeof(winners) = 'array' and jsonb_array_length(winners) between 0 and 3);
+
+-- Migration: split Mappila Paatu into Mappila Pattu Boys and Mappila Pattu Girls
+insert into public.events(name, category, sort_order, status)
+select 'Mappila Pattu Boys', category, sort_order, status from public.events where name in ('Mappila Paatu', 'Mappila Pattu')
+on conflict (name) do nothing;
+insert into public.events(name, category, sort_order, status)
+select 'Mappila Pattu Girls', category, sort_order + 1, status from public.events where name in ('Mappila Paatu', 'Mappila Pattu')
+on conflict (name) do nothing;
+delete from public.events where name in ('Mappila Paatu', 'Mappila Pattu');
+
 create table if not exists public.leaderboard_settings (
   id integer primary key check (id = 1),
   is_manual boolean not null default false,
@@ -96,14 +109,15 @@ insert into public.events(name,category,sort_order) values
 ('Mono Act','Pre Stage',27),
 ('Light Music','Pre Stage',28),
 ('Rap (English, Malayalam)','Pre Stage',29),
-('Mappila Paatu','Pre Stage',30),
-('Patriotic Song','Pre Stage',31),
-('Poem Recitation English','Pre Stage',32),
-('Poem Recitation Malayalam','Pre Stage',33),
-('Poem Recitation Hindi','Pre Stage',34),
-('Classical Music','Pre Stage',35),
-('Nadan Pattu','Pre Stage',36),
-('Elocution English','Pre Stage',37),
-('Elocution Malayalam','Pre Stage',38),
-('Group Song Western','Pre Stage',39)
+('Mappila Pattu Boys','Pre Stage',30),
+('Mappila Pattu Girls','Pre Stage',31),
+('Patriotic Song','Pre Stage',32),
+('Poem Recitation English','Pre Stage',33),
+('Poem Recitation Malayalam','Pre Stage',34),
+('Poem Recitation Hindi','Pre Stage',35),
+('Classical Music','Pre Stage',36),
+('Nadan Pattu','Pre Stage',37),
+('Elocution English','Pre Stage',38),
+('Elocution Malayalam','Pre Stage',39),
+('Group Song Western','Pre Stage',40)
 on conflict (name) do nothing;

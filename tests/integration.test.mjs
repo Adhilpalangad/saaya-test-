@@ -160,3 +160,42 @@ test('empty gallery data is a valid success response', async () => {
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).gallery, []);
 });
+test('winner upload requires only 1st place; 2nd and 3rd optional for disqualification', async () => {
+  currentDb = savedDataDb();
+  const { POST } = await exportsOf('app/api/results/route.js');
+
+  // Saving only 1st place succeeds and calculates 5 pts
+  const singleRes = await POST(request({ eventName: 'Oppana', winners: [{ n: 'Solo Champion', d: 'CSE', s: 4 }] }));
+  assert.equal(singleRes.status, 200);
+  const singleBody = await singleRes.json();
+  assert.equal(singleBody.results[0].p.length, 1);
+  assert.equal(singleBody.results[0].p[0].n, 'Solo Champion');
+  assert.equal(singleBody.points.Lannister, 5);
+  assert.equal(singleBody.points.Stark, 0);
+
+  // Saving 1st and 3rd place (2nd disqualified) awards 5 pts and 1 pt
+  const sparseRes = await POST(request({
+    eventName: 'Oppana',
+    winners: [
+      { n: 'First Place', d: 'EEE', s: 4, place: 1 },
+      { n: '', d: 'ME', s: 4, place: 2 },
+      { n: 'Third Place', d: 'AD', s: 2, place: 3 },
+    ],
+  }));
+  assert.equal(sparseRes.status, 200);
+  const sparseBody = await sparseRes.json();
+  assert.equal(sparseBody.results[0].p.length, 2);
+  assert.equal(sparseBody.points.Stark, 5);
+  assert.equal(sparseBody.points.Targaryen, 1);
+
+  // Reject when 1st place is blank or missing
+  const noFirstRes = await POST(request({
+    eventName: 'Oppana',
+    winners: [
+      { n: '', d: 'EEE', s: 4, place: 1 },
+      { n: 'Second Place', d: 'CSE', s: 2, place: 2 },
+    ],
+  }));
+  assert.equal(noFirstRes.status, 400);
+});
+

@@ -5,7 +5,7 @@ The application uses Supabase for event statuses, published winners, leaderboard
 ## Activate your database
 
 1. Open your Supabase project → SQL Editor → New query.
-2. Paste and run all of `supabase/setup.sql`. It creates protected tables and seeds the 40 event names with upcoming statuses and no winners. Existing matching rows are preserved when rerun.
+2. Paste and run all of `supabase/setup.sql`. It creates protected tables and seeds the 41 event names with upcoming statuses and no winners. Existing matching rows are preserved when rerun.
 3. Open Authentication → Users → Add user and create your admin email/password account. Confirm the email using the dashboard option if necessary.
 4. Copy that user's UUID and run this in SQL Editor:
 
@@ -32,7 +32,7 @@ Open `/admin` and sign in with the authorized Supabase account. The old demo pas
 
 - All data API routes query Supabase rather than local JSON or uploaded files.
 - Every admin API requires a verified Supabase access token and an admin membership. Supabase row-level policies independently enforce those permissions.
-- An event save publishes all three winners together. Points use the existing 5/3/1 rule and derive the squad from the department.
+- An event save requires only 1st place (mandatory). 2nd and 3rd places are optional to accommodate disqualifications or unawarded slots. Points use the existing 5/3/1 rule and derive the squad from the department.
 - Manual scores can override automatic scores. Returning to auto mode recalculates from published winners.
 - Public pages refresh every 15 seconds while visible and on refocus. No Supabase realtime connection quota is consumed.
 - Empty results and gallery responses clear the display. Data outages show an update message instead of dummy winners.

@@ -111,8 +111,24 @@ export default function AdminPanel() {
   useEffect(() => {
     if (!results.length) return;
     const found = results.find((r) => r.n === selectedEvent);
-    if (found && Array.isArray(found.p) && found.p.length === 3) {
-      setWinners(found.p.map((p) => ({ ...p })));
+    if (found && Array.isArray(found.p) && found.p.length > 0) {
+      const nextWinners = [
+        { n: '', s: 4, d: 'CSE', q: 'Lannister' },
+        { n: '', s: 4, d: 'ME', q: 'Targaryen' },
+        { n: '', s: 4, d: 'EEE', q: 'Stark' },
+      ];
+      found.p.forEach((p, idx) => {
+        const placeIdx = typeof p.place === 'number' && p.place >= 1 && p.place <= 3 ? p.place - 1 : idx;
+        if (placeIdx >= 0 && placeIdx < 3) {
+          nextWinners[placeIdx] = {
+            n: p.n || '',
+            s: p.s || 4,
+            d: p.d || 'CSE',
+            q: p.q || DEPT_TO_SQUAD[p.d] || 'Lannister',
+          };
+        }
+      });
+      setWinners(nextWinners);
     } else {
       setWinners([
         { n: '', s: 4, d: 'CSE', q: 'Lannister' },
@@ -242,16 +258,33 @@ export default function AdminPanel() {
     });
   };
 
+  // Clear single winner (for disqualification / unawarded)
+  const handleClearWinner = (idx) => {
+    setWinners((prev) => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], n: '' };
+      return copy;
+    });
+  };
+
   // Save event winners
   const handleSaveWinners = async (e) => {
     e.preventDefault();
+    if (!winners[0]?.n?.trim()) {
+      showToast('1st Place winner is mandatory.');
+      return;
+    }
     try {
+      const winnersPayload = winners.map((w, idx) => ({
+        ...w,
+        place: idx + 1,
+      }));
       const res = await adminFetch('/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventName: selectedEvent,
-          winners,
+          winners: winnersPayload,
         }),
       });
       const data = await res.json();
@@ -267,6 +300,8 @@ export default function AdminPanel() {
             ? `Results saved for ${selectedEvent}! (Leaderboard is currently in Manual Mode)`
             : `Results updated for ${selectedEvent}! Leaderboard auto-refreshed.`
         );
+      } else {
+        showToast(data.error || 'Failed to save results');
       }
     } catch (err) {
       showToast(err.message || 'Failed to save results');
@@ -567,7 +602,7 @@ export default function AdminPanel() {
           <div className="adm-section-head">
             <div>
               <h2>Results &amp; Hall of Fame Manager</h2>
-              <p>Record 1st, 2nd, and 3rd place winners for each event. Squad points update automatically!</p>
+              <p>Record event winners. <b>Only 1st place is mandatory</b> &mdash; 2nd and 3rd place are optional (leave blank if disqualified or not awarded). Squad points calculate automatically!</p>
             </div>
           </div>
 
@@ -588,21 +623,45 @@ export default function AdminPanel() {
 
             <form onSubmit={handleSaveWinners}>
               <div className="adm-winners-inputs">
-                {['1st Place (5 PTS)', '2nd Place (3 PTS)', '3rd Place (1 PT)'].map((label, idx) => {
+                {[
+                  { label: '1st Place (5 PTS)', mandatory: true },
+                  { label: '2nd Place (3 PTS)', mandatory: false },
+                  { label: '3rd Place (1 PT)', mandatory: false },
+                ].map((placeInfo, idx) => {
                   const w = winners[idx] || { n: '', s: 4, d: 'CSE', q: 'Lannister' };
                   const maxSem = w.d === 'MCA' ? 4 : 7;
+                  const isFirst = idx === 0;
                   return (
-                    <div key={idx} className="adm-winner-row">
-                      <div className="adm-win-badge">0{idx + 1} &middot; {label}</div>
+                    <div key={idx} className={`adm-winner-row ${isFirst ? 'adm-win-req' : 'adm-win-opt'}`}>
+                      <div className="adm-win-head">
+                        <div className="adm-win-badge">
+                          0{idx + 1} &middot; {placeInfo.label}
+                        </div>
+                        <span className={`adm-win-status-tag ${isFirst ? 'req' : 'opt'}`}>
+                          {isFirst ? '★ MANDATORY' : 'OPTIONAL / DISQUALIFIED'}
+                        </span>
+                        {!isFirst && w.n && (
+                          <button
+                            type="button"
+                            onClick={() => handleClearWinner(idx)}
+                            className="adm-clear-win-btn"
+                            title="Clear / Mark as disqualified"
+                          >
+                            &times; Clear (Disqualify)
+                          </button>
+                        )}
+                      </div>
                       <div className="adm-win-fields">
                         <div>
-                          <label className="adm-sublabel">Student Name</label>
+                          <label className="adm-sublabel">
+                            Student Name {isFirst ? <span style={{ color: '#e0453b', fontWeight: 'bold' }}>*</span> : <span style={{ opacity: 0.65 }}>(Optional)</span>}
+                          </label>
                           <input
                             type="text"
-                            placeholder="Student Name"
+                            placeholder={isFirst ? 'Student Name (Mandatory)' : 'Student Name (Leave blank if disqualified)'}
                             value={w.n}
                             onChange={(e) => handleWinnerChange(idx, 'n', e.target.value)}
-                            required
+                            required={isFirst}
                             className="adm-input"
                           />
                         </div>

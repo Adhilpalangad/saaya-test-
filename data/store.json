@@ -820,7 +820,7 @@
     },
     {
       "t": "Pre Stage",
-      "n": "Mappila Paatu",
+      "n": "Mappila Pattu Boys",
       "p": [
         {
           "n": "Student 91",
@@ -839,6 +839,30 @@
           "s": 2,
           "d": "CSE",
           "q": "Lannister"
+        }
+      ]
+    },
+    {
+      "t": "Pre Stage",
+      "n": "Mappila Pattu Girls",
+      "p": [
+        {
+          "n": "Student 94",
+          "s": 4,
+          "d": "EEE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 95",
+          "s": 2,
+          "d": "CE",
+          "q": "Stark"
+        },
+        {
+          "n": "Student 96",
+          "s": 6,
+          "d": "AD",
+          "q": "Targaryen"
         }
       ]
     },
