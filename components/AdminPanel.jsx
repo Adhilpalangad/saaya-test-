@@ -629,7 +629,7 @@ export default function AdminPanel() {
                   { label: '3rd Place (1 PT)', mandatory: false },
                 ].map((placeInfo, idx) => {
                   const w = winners[idx] || { n: '', s: 4, d: 'CSE', q: 'Lannister' };
-                  const maxSem = w.d === 'MCA' ? 4 : 7;
+                  const maxSem = w.d === 'MCA' ? 4 : 8;
                   const isFirst = idx === 0;
                   return (
                     <div key={idx} className={`adm-winner-row ${isFirst ? 'adm-win-req' : 'adm-win-opt'}`}>

@@ -29,6 +29,12 @@ export async function POST(req) {
     const next = status === 'reset' ? 'upcoming' : status;
     if (!['live', 'done', 'upcoming'].includes(next)) throw new ApiError('Invalid event status.');
     let row = checked(await db.from('events').update({ status: next }).eq('name', eventName).select('name').maybeSingle());
+    if (!row && (eventName === 'Mappila Pattu Boys' || eventName === 'Mappila Pattu Girls')) {
+      const checkOld = await db.from('events').select('name').in('name', ['Mappila Paatu', 'Mappila Pattu']).maybeSingle();
+      if (checkOld.data?.name) {
+        row = checked(await db.from('events').update({ name: eventName, status: next }).eq('name', checkOld.data.name).select('name').maybeSingle());
+      }
+    }
     if (!row) {
       let cat = 'Pre Stage', sort_order = 30;
       let order = 0;

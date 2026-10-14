@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabase } from '../../../lib/supabase';
 import { requireAdmin, checked, failure, ApiError } from '../../../lib/api';
 import { getLeaderboardData } from '../../../lib/store';
-import { SQ, SQN } from '../../../lib/data';
+import { EV, SQ, SQN } from '../../../lib/data';
 
 export const dynamic = 'force-dynamic';
 async function payload(db) {
@@ -70,7 +70,7 @@ export async function POST(req) {
         }
         const q = SQN.find(sq => SQ[sq].d.includes(w.d));
         const s = Number(w.s);
-        if (!q || !Number.isInteger(s) || s < 1 || s > (w.d === 'MCA' ? 4 : 7)) {
+        if (!q || !Number.isInteger(s) || s < 1 || s > (w.d === 'MCA' ? 4 : 8)) {
           throw new ApiError('Check winner names, departments, and semesters.');
         }
         winners.push({ n: name, d: w.d, s, q, place });
@@ -84,6 +84,17 @@ export async function POST(req) {
         updateRes = await db.from('events').update({ winners: paddedWinners }).eq('name', body.eventName).select('name').maybeSingle();
       }
       let row = checked(updateRes);
+      if (!row && (body.eventName === 'Mappila Pattu Boys' || body.eventName === 'Mappila Pattu Girls')) {
+        const oldCheck = await db.from('events').select('name').in('name', ['Mappila Paatu', 'Mappila Pattu']).maybeSingle();
+        if (oldCheck.data?.name) {
+          let renRes = await db.from('events').update({ name: body.eventName, winners }).eq('name', oldCheck.data.name).select('name').maybeSingle();
+          if (renRes.error && renRes.error.code === '23514' && winners.length < 3) {
+            const paddedWinners = [...winners, ...Array(3 - winners.length).fill(null)];
+            renRes = await db.from('events').update({ name: body.eventName, winners: paddedWinners }).eq('name', oldCheck.data.name).select('name').maybeSingle();
+          }
+          row = checked(renRes);
+        }
+      }
       if (!row) {
         let cat = 'Pre Stage', sort_order = 30;
         let order = 0;

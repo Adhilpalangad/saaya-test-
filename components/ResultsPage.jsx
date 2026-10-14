@@ -98,21 +98,13 @@ export default function ResultsPage() {
                 return [head,
                   <div className="rr" key={r.n} style={{ animationDelay: Math.min(k++, 12) * 0.04 + 's' }}>
                     <div className="re"><h3>{r.n}</h3><span className="chip">{r.t}</span></div>
-                    {[0, 1, 2].map((i) => {
-                      const p = r.p.find((w, idx) => (typeof w.place === 'number' && w.place >= 1 && w.place <= 3 ? w.place === i + 1 : idx === i));
-                      if (p) {
-                        return (
-                          <div key={i} className={`pl r${i}${ok(p) ? '' : ' dim'}`}>
-                            <b className="bd">{MED[i]}</b>
-                            <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
-                            <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
-                          </div>
-                        );
-                      }
+                    {r.p.map((p, idx) => {
+                      const placeIdx = typeof p.place === 'number' && p.place >= 1 && p.place <= 3 ? p.place - 1 : idx;
                       return (
-                        <div key={i} className={`pl pl-empty r${i}`}>
-                          <b className="bd">{MED[i]}</b>
-                          <div><span className="pl-na">&mdash;</span><small className="pl-na-sub">Not awarded</small></div>
+                        <div key={idx} className={`pl r${placeIdx} pl-pos-${placeIdx}${ok(p) ? '' : ' dim'}`}>
+                          <b className="bd">{MED[placeIdx]}</b>
+                          <div><strong>{p.n}</strong><small>S{p.s} &middot; {p.d}</small></div>
+                          <i className="dot" style={{ background: SQ[p.q]?.c }} title={p.q} />
                         </div>
                       );
                     })}

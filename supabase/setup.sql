@@ -29,6 +29,15 @@ select 'Mappila Pattu Girls', category, sort_order + 1, status from public.event
 on conflict (name) do nothing;
 delete from public.events where name in ('Mappila Paatu', 'Mappila Pattu');
 
+-- Migration: grant admin inserts and updates on events
+grant insert, delete on public.events to authenticated;
+drop policy if exists "Admin event inserts" on public.events;
+create policy "Admin event inserts" on public.events for insert to authenticated
+  with check (exists (select 1 from public.admins where user_id = (select auth.uid())));
+drop policy if exists "Admin event deletes" on public.events;
+create policy "Admin event deletes" on public.events for delete to authenticated
+  using (exists (select 1 from public.admins where user_id = (select auth.uid())));
+
 create table if not exists public.leaderboard_settings (
   id integer primary key check (id = 1),
   is_manual boolean not null default false,
@@ -50,7 +59,7 @@ alter table public.events enable row level security;
 alter table public.leaderboard_settings enable row level security;
 alter table public.gallery enable row level security;
 grant select on public.events, public.leaderboard_settings, public.gallery to anon, authenticated;
-grant update on public.events, public.leaderboard_settings to authenticated;
+grant insert, update, delete on public.events, public.leaderboard_settings to authenticated;
 grant insert, delete on public.gallery to authenticated;
 revoke insert, update, delete on public.events, public.leaderboard_settings, public.gallery from anon;
 
@@ -60,6 +69,12 @@ drop policy if exists "Admin event edits" on public.events;
 create policy "Admin event edits" on public.events for update to authenticated
   using (exists (select 1 from public.admins where user_id = (select auth.uid())))
   with check (exists (select 1 from public.admins where user_id = (select auth.uid())));
+drop policy if exists "Admin event inserts" on public.events;
+create policy "Admin event inserts" on public.events for insert to authenticated
+  with check (exists (select 1 from public.admins where user_id = (select auth.uid())));
+drop policy if exists "Admin event deletes" on public.events;
+create policy "Admin event deletes" on public.events for delete to authenticated
+  using (exists (select 1 from public.admins where user_id = (select auth.uid())));
 drop policy if exists "Public leaderboard" on public.leaderboard_settings;
 create policy "Public leaderboard" on public.leaderboard_settings for select using (true);
 drop policy if exists "Admin leaderboard edits" on public.leaderboard_settings;
