@@ -5,6 +5,8 @@ import { getSupabase } from '../lib/supabase';
 import { adminFetch } from '../lib/admin-fetch';
 import { galleryImage } from '../lib/images';
 import { EV, SQ, SQN } from '../lib/data';
+import PointTableLogs from './PointTableLogs';
+import SuperAdminCenter from './SuperAdminCenter';
 
 const DEPTS = ['ME', 'AD', 'ECE', 'EEE', 'CE', 'MCA', 'CSE'];
 const DEPT_TO_SQUAD = {
@@ -17,10 +19,12 @@ export default function AdminPanel() {
   const [auth, setAuth] = useState(false);
   const [pass, setPass] = useState('');
   const [email, setEmail] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
   const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [tab, setTab] = useState('events'); // 'events' | 'gallery' | 'results' | 'leaderboard'
+  const [tab, setTab] = useState('events'); // 'events' | 'gallery' | 'results' | 'leaderboard' | 'super_admin'
   const [toast, setToast] = useState('');
+  const [ptLogsTrigger, setPtLogsTrigger] = useState(0);
 
   // Events state
   const [statuses, setStatuses] = useState({});
@@ -58,13 +62,28 @@ export default function AdminPanel() {
       try {
         const res = await fetch('/api/auth', { headers: { Authorization: 'Bearer ' + session.access_token } });
         const body = await res.json();
-        if (active) { setAuth(res.ok); if (!res.ok) setAuthError(body.error); }
-      } catch { if (active) { setAuth(false); setAuthError('Unable to verify administrator access.'); } }
+        if (active) {
+          setAuth(res.ok);
+          if (res.ok && body.user) {
+            setCurrentUser(body.user);
+            setAuthError('');
+          } else {
+            // Quietly clear expired background tokens so login screen remains clean
+            if (res.status === 401) {
+              await db.auth.signOut().catch(() => {});
+            } else if (body.error) {
+              setAuthError(body.error);
+            }
+          }
+        }
+      } catch { if (active) { setAuth(false); } }
     };
-    db.auth.getSession().then(({ data }) => verify(data.session)).catch(() => { if (active) setAuthError('Unable to restore your session.'); });
+    db.auth.getSession().then(({ data }) => verify(data.session)).catch(() => { if (active) setAuth(false); });
     const { data: { subscription } } = db.auth.onAuthStateChange((_event, session) => { setTimeout(() => { if (active) verify(session); }, 0); });
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
+
+
 
   const showToast = (msg) => {
     setToast(msg);
@@ -170,13 +189,15 @@ export default function AdminPanel() {
       const res = await fetch('/api/auth', { headers: { Authorization: 'Bearer ' + data.session.access_token } });
       const body = await res.json();
       if (!res.ok) { await getSupabase().auth.signOut(); throw new Error(body.error); }
+      if (body.user) setCurrentUser(body.user);
       setAuth(true); setPass('');
     } catch (error) { setAuthError(error.message); }
     finally { setSigningIn(false); }
   };
   const handleLogout = async () => {
-    await getSupabase().auth.signOut(); setAuth(false); setPass('');
+    await getSupabase().auth.signOut(); setAuth(false); setCurrentUser(null); setPass('');
   };
+
 
   // Event status toggle
   const handleEventStatus = async (eventName, status) => {
@@ -192,8 +213,10 @@ export default function AdminPanel() {
       if (res.ok) {
         const data = await res.json();
         setStatuses(data.eventStatuses);
+        setPtLogsTrigger((prev) => prev + 1);
         showToast(`${eventName} is now ${newStatus.toUpperCase()}`);
       }
+
     } catch (err) {
       showToast(err.message || 'Failed to update event status');
     }
@@ -349,6 +372,7 @@ export default function AdminPanel() {
         if (data.autoPoints) setAutoPoints(data.autoPoints);
         if (data.isManual !== undefined) setIsManual(data.isManual);
         if (!data.isManual && data.points) setManualScores(data.points);
+        setPtLogsTrigger((prev) => prev + 1);
         showToast(
           data.isManual
             ? `Results saved for ${selectedEvent} (${isGroup ? 'Group Program' : 'Individual'})! (Leaderboard is in Manual Mode)`
@@ -395,6 +419,7 @@ export default function AdminPanel() {
         if (data.manualPoints) setManualScores(data.manualPoints);
         if (data.autoPoints) setAutoPoints(data.autoPoints);
         if (data.isManual !== undefined) setIsManual(data.isManual);
+        setPtLogsTrigger((prev) => prev + 1);
         showToast('Leaderboard points manually marked and broadcasted live!');
       } else {
         showToast(data.error || 'Failed to save points');
@@ -423,10 +448,12 @@ export default function AdminPanel() {
         if (data.manualPoints) setManualScores(data.manualPoints);
         if (data.autoPoints) setAutoPoints(data.autoPoints);
         if (data.isManual !== undefined) setIsManual(data.isManual);
+        setPtLogsTrigger((prev) => prev + 1);
         showToast('Leaderboard reset to auto-calculated results!');
       } else {
         showToast(data.error || 'Failed to recalculate');
       }
+
     } catch (err) {
       showToast(err.message || 'Error recalculating points');
     } finally {
@@ -482,10 +509,33 @@ export default function AdminPanel() {
     <div className="adm-wrap">
       <div className="adm-header">
         <div>
-          <h1>SAAYA 26 &middot; Admin Portal</h1>
-          <p>Real-time control panel for Live Events, Gallery Uploads, Results, and Leaderboard.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <h1 style={{ margin: 0 }}>SAAYA 26 &middot; Admin Portal</h1>
+            {currentUser && (
+              <span className={`adm-badge-pill ${currentUser.isSuperAdmin ? 'super' : 'admin'}`}>
+                {currentUser.isSuperAdmin ? '👑 SUPER ADMIN' : '🛡️ ADMIN'}
+              </span>
+            )}
+          </div>
+          <p style={{ marginTop: 4, marginBottom: 0 }}>
+            Real-time control panel for Live Events, Gallery Uploads, Results, and Leaderboard.
+            {currentUser?.email && (
+              <span className="adm-user-inline">
+                &middot; Signed in as: <b>{currentUser.email}</b>
+              </span>
+            )}
+          </p>
         </div>
         <div className="adm-head-actions">
+          {currentUser?.isSuperAdmin && (
+            <button
+              type="button"
+              className={`adm-super-btn ${tab === 'super_admin' ? 'active' : ''}`}
+              onClick={() => setTab('super_admin')}
+            >
+              👑 Super Admin Suite
+            </button>
+          )}
           <Link href="/events" className="adm-view-btn" target="_blank">View Live Events &rarr;</Link>
           <button onClick={handleLogout} className="adm-logout-btn">Log Out</button>
         </div>
@@ -507,7 +557,11 @@ export default function AdminPanel() {
         <button className={tab === 'leaderboard' ? 'on' : ''} onClick={() => setTab('leaderboard')}>
           📊 Leaderboard &amp; Points
         </button>
+        <button className={`adm-super-tab-btn ${tab === 'super_admin' ? 'on' : ''}`} onClick={() => setTab('super_admin')}>
+          👑 Super Admin &amp; Audit Logs
+        </button>
       </div>
+
 
       {/* TAB 1: LIVE EVENTS CONTROLLER */}
       {tab === 'events' && (
@@ -968,8 +1022,17 @@ export default function AdminPanel() {
               ))}
             </div>
           </div>
+
+          {/* POINT TABLE AUDIT TRAIL */}
+          <PointTableLogs refreshTrigger={ptLogsTrigger} />
         </div>
+      )}
+
+      {/* TAB 5: SUPER ADMIN CONTROL SUITE */}
+      {tab === 'super_admin' && (
+        <SuperAdminCenter currentUser={currentUser} showToast={showToast} />
       )}
     </div>
   );
 }
+
