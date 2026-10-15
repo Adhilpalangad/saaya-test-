@@ -4,9 +4,6 @@ import { SQ, SQN } from '../lib/data';
 import { usePublicData } from '../lib/use-public-data';
 import {
   Trophy,
-  Crown,
-  Medal,
-  Award,
   Flame,
   Clock,
   Maximize2,
@@ -89,6 +86,13 @@ export default function ScreenLeaderboard() {
     return valid.slice(-2).reverse();
   }, [data]);
 
+  // Animation state for progress bars
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setOn(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   // Squad styling lookup
   const squadStyles = {
     Targaryen: {
@@ -110,36 +114,6 @@ export default function ScreenLeaderboard() {
       depts: 'CSE',
     },
   };
-
-  // Rank styling tokens
-  const rankStyles = [
-    {
-      label: '1',
-      badgeClass: 'pos-1',
-      color: '#ffd700',
-      bg: 'rgba(224, 176, 48, 0.22)',
-      border: 'rgba(224, 176, 48, 0.7)',
-      Icon: Crown,
-    },
-    {
-      label: '2',
-      badgeClass: 'pos-2',
-      color: '#e2e8f0',
-      bg: 'rgba(226, 232, 240, 0.16)',
-      border: 'rgba(226, 232, 240, 0.5)',
-      Icon: Medal,
-    },
-    {
-      label: '3',
-      badgeClass: 'pos-3',
-      color: '#e29b68',
-      bg: 'rgba(205, 127, 50, 0.18)',
-      border: 'rgba(205, 127, 50, 0.5)',
-      Icon: Award,
-    },
-  ];
-
-  const defaultPointsPerRank = ['+5 PTS', '+3 PTS', '+2 PTS'];
 
   return (
     <main id="screen-view">
@@ -192,71 +166,46 @@ export default function ScreenLeaderboard() {
 
             <div className="screen-squads-list">
               {board.map(([name, depts, pts], index) => {
-                const rankInfo = rankStyles[index] || {
-                  label: String(index + 1),
-                  color: '#eadfd2',
-                  bg: 'rgba(255, 255, 255, 0.05)',
-                  border: 'rgba(255, 255, 255, 0.1)',
-                  Icon: Award,
-                };
+                const s = SQ[name] || {};
                 const squadInfo = squadStyles[name] || {
-                  color: '#eadfd2',
+                  color: s.c || '#eadfd2',
                   colorLight: '#ffffff',
-                  banner: SQ[name]?.banner || '/images/logo-nav-white.png',
-                  depts: depts || '',
+                  banner: s.banner || '',
+                  depts: s.d ? s.d.join(' \u00b7 ') : depts,
                 };
+                const color = s.c || squadInfo.color;
+                const banner = s.banner || squadInfo.banner;
+                const deptsStr = s.d ? s.d.join(' \u00b7 ') : (squadInfo.depts || depts);
                 const percent = Math.min(100, Math.round(((Number(pts) || 0) / maxPoints) * 100));
                 const isFirst = index === 0 && (Number(pts) || 0) > 0;
-                const RankIcon = rankInfo.Icon;
 
                 return (
                   <div
                     key={name}
-                    className={`screen-squad-item ${isFirst ? 'leader' : ''}`}
+                    className={`screen-squad-item ${isFirst ? 'leader' : ''} ${banner ? 'has-bn' : ''}`}
                     style={{
-                      '--sq-color': squadInfo.color,
-                      '--sq-color-light': squadInfo.colorLight,
-                      '--sq-glow': squadInfo.color + '44',
-                      '--sq-border': isFirst ? 'rgba(224, 176, 48, 0.55)' : squadInfo.color + '40',
-                      '--rank-color': rankInfo.color,
-                      '--rank-bg': rankInfo.bg,
-                      '--rank-border': rankInfo.border,
+                      '--sq': color,
+                      '--sq-color': color,
+                      '--sq-color-light': squadInfo.colorLight || color,
+                      '--sq-glow': color + '44',
+                      '--sq-border': isFirst ? 'rgba(224, 176, 48, 0.55)' : color + '40',
                     }}
                   >
-                    <div className="screen-squad-left">
-                      {/* Rank Badge */}
-                      <div className="screen-rank-badge">
-                        <RankIcon size={18} color={rankInfo.color} />
-                        <span>#{index + 1}</span>
-                      </div>
-
-                      {/* Crest Banner */}
-                      <div className="screen-squad-crest">
-                        <img
-                          src={squadInfo.banner}
-                          alt={`${name} Crest`}
-                          loading="eager"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-
-                      {/* Squad Name and Departments */}
-                      <div className="screen-squad-info">
-                        <h3 className="screen-squad-name">{name}</h3>
-                        <p className="screen-squad-depts">{squadInfo.depts || depts}</p>
-                        <div className="screen-squad-bar-wrap">
-                          <div className="screen-squad-bar" style={{ width: `${percent}%` }} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Big Visible Points */}
-                    <div className="screen-squad-points">
-                      <span className="screen-squad-points-val">{pts}</span>
-                      <span className="screen-squad-points-label">PTS</span>
-                    </div>
+                    {banner && (
+                      <span
+                        className="sqc-bn"
+                        style={{ backgroundImage: `url("${encodeURI(banner)}")` }}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <small>SQUAD</small>
+                    <h3>{name}</h3>
+                    <p>{deptsStr}</p>
+                    <b>
+                      {pts}
+                      <em>PTS</em>
+                    </b>
+                    <i style={{ width: on ? `${percent}%` : '0%' }} />
                   </div>
                 );
               })}

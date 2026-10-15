@@ -20,12 +20,12 @@ export const metadata = {
 };
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
-/* runs before first paint: sets the saved light/dark theme */
-const init = `try{var t=localStorage.getItem('saayaTheme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}`;
+/* runs before first paint: forces dark theme */
+const init = `document.documentElement.dataset.theme='dark';try{localStorage.setItem('saayaTheme','dark')}catch(e){}`;
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${rye.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme="dark" className={`${rye.variable} ${inter.variable}`} suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: init }} /></head>
       <body>
         <div id="bar" />

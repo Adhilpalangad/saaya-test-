@@ -1,30 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function Nav() {
   const pathname = usePathname();
-  const [theme, setTheme] = useState('light');
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setTheme(document.documentElement.dataset.theme || 'light');
-  }, []);
 
   if (pathname?.startsWith('/screen') || pathname?.startsWith('/leaderboard')) {
     return null;
   }
-
-
-  const toggle = () => {
-    const t = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = t;
-    try {
-      localStorage.setItem('saayaTheme', t);
-    } catch (e) {}
-    setTheme(t);
-  };
 
   return (
     <>
@@ -38,17 +23,6 @@ export default function Nav() {
           <li><Link href="/about">About</Link></li>
         </ul>
         <ul className="ac">
-          <li className="tgl">
-            <button
-              id="tg"
-              className="tg"
-              onClick={toggle}
-              aria-label="Switch light/dark theme"
-              title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            >
-              {theme === 'dark' ? '\u2600' : '\u263E'}
-            </button>
-          </li>
           <li>
             <button
               className={`mob-btn ${menuOpen ? 'open' : ''}`}
