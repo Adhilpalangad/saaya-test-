@@ -1,13 +1,28 @@
 -- Run in the Supabase SQL Editor. Safe to rerun; existing results are preserved.
 begin;
 create table if not exists public.admins (
-  user_id uuid primary key references auth.users(id) on delete cascade
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  role text not null default 'admin' check (role in ('admin', 'super_admin')),
+  email text,
+  created_at timestamptz not null default now()
 );
+alter table public.admins add column if not exists role text not null default 'admin' check (role in ('admin', 'super_admin'));
+alter table public.admins add column if not exists email text;
+alter table public.admins add column if not exists created_at timestamptz not null default now();
+
 alter table public.admins enable row level security;
 grant select on public.admins to authenticated;
+grant insert, update, delete on public.admins to authenticated;
 revoke all on public.admins from anon;
 drop policy if exists "Read own membership" on public.admins;
-create policy "Read own membership" on public.admins for select to authenticated using (user_id = (select auth.uid()));
+create policy "Read own membership" on public.admins for select to authenticated using (
+  user_id = (select auth.uid()) or exists (select 1 from public.admins where user_id = (select auth.uid()))
+);
+drop policy if exists "Super admin manage admins" on public.admins;
+create policy "Super admin manage admins" on public.admins for all to authenticated
+  using (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'))
+  with check (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'));
+
 
 create table if not exists public.events (
   name text primary key,
@@ -90,7 +105,59 @@ create policy "Admin gallery inserts" on public.gallery for insert to authentica
 drop policy if exists "Admin gallery deletes" on public.gallery;
 create policy "Admin gallery deletes" on public.gallery for delete to authenticated
   using (exists (select 1 from public.admins where user_id = (select auth.uid())));
+
+-- Super Admin & Audit Log tables
+create table if not exists public.audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  admin_id uuid references auth.users(id) on delete set null,
+  admin_email text not null,
+  admin_role text not null default 'admin',
+  action_type text not null,
+  entity_type text,
+  entity_name text,
+  summary text not null,
+  details jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists audit_logs_created_at_idx on public.audit_logs(created_at desc);
+create index if not exists audit_logs_action_type_idx on public.audit_logs(action_type);
+create index if not exists audit_logs_admin_email_idx on public.audit_logs(admin_email);
+
+create table if not exists public.system_settings (
+  id integer primary key check (id = 1),
+  is_locked_down boolean not null default false,
+  lockdown_reason text default null,
+  updated_at timestamptz not null default now()
+);
+insert into public.system_settings(id, is_locked_down) values (1, false) on conflict do nothing;
+
+alter table public.audit_logs enable row level security;
+alter table public.system_settings enable row level security;
+
+grant select, insert, delete on public.audit_logs to authenticated;
+revoke all on public.audit_logs from anon;
+
+drop policy if exists "Admins read audit logs" on public.audit_logs;
+create policy "Admins read audit logs" on public.audit_logs for select to authenticated
+  using (exists (select 1 from public.admins where user_id = (select auth.uid())));
+drop policy if exists "Admins insert audit logs" on public.audit_logs;
+create policy "Admins insert audit logs" on public.audit_logs for insert to authenticated
+  with check (exists (select 1 from public.admins where user_id = (select auth.uid())));
+drop policy if exists "Super admin purge audit logs" on public.audit_logs;
+create policy "Super admin purge audit logs" on public.audit_logs for delete to authenticated
+  using (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'));
+
+grant select on public.system_settings to anon, authenticated;
+grant update on public.system_settings to authenticated;
+drop policy if exists "Public view system settings" on public.system_settings;
+create policy "Public view system settings" on public.system_settings for select using (true);
+drop policy if exists "Super admin edit system settings" on public.system_settings;
+create policy "Super admin edit system settings" on public.system_settings for update to authenticated
+  using (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'))
+  with check (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'));
+
 commit;
+
 
 -- Event seed follows. No dummy winners or fake gallery photos are imported.
 

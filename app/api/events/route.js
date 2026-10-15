@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabase } from '../../../lib/supabase';
 import { requireAdmin, checked, failure, ApiError } from '../../../lib/api';
 import { EV, DAYS } from '../../../lib/data';
+import { recordAuditLog } from '../../../lib/audit';
 
 export const dynamic = 'force-dynamic';
 export async function GET() {
@@ -51,6 +52,21 @@ export async function POST(req) {
       row = checked(await db.from('events').insert({ name: eventName, category: cat, sort_order, status: next }).select('name').maybeSingle());
     }
     if (!row) throw new ApiError('Event not found.', 404);
+
+    // Audit log for event status change
+    const adminEmail = db.adminUser?.email || 'Admin';
+    await recordAuditLog(db, {
+      action: 'EVENT_STATUS_CHANGE',
+      entityType: 'event',
+      entityName: eventName,
+      summary: `Changed "${eventName}" status to ${next.toUpperCase()} by ${adminEmail}`,
+      details: {
+        eventName,
+        status: next,
+      },
+      req,
+    });
+
     const rows = checked(await db.from('events').select('name,status'));
     const eventStatuses = Object.fromEntries(rows.map(r => [r.name, r.status]));
     for (const list of Object.values(EV)) {
@@ -61,3 +77,4 @@ export async function POST(req) {
     return NextResponse.json({ success: true, eventStatuses });
   } catch (error) { return failure(error); }
 }
+

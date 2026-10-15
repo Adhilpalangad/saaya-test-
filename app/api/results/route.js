@@ -3,6 +3,7 @@ import { getSupabase } from '../../../lib/supabase';
 import { requireAdmin, checked, failure, ApiError } from '../../../lib/api';
 import { getLeaderboardData } from '../../../lib/store';
 import { EV, SQ, SQN } from '../../../lib/data';
+import { recordAuditLog, getPointTableLogs } from '../../../lib/audit';
 
 export const dynamic = 'force-dynamic';
 async function payload(db) {
@@ -71,7 +72,7 @@ async function payload(db) {
     })
     .filter(r => r.p.length > 0);
 
-  // Clean manualPoints passed to client so _extra_events is hidden from squad points
+  // Clean manualPoints passed to client so _extra_events and _audit_logs are hidden from squad points
   const cleanManualPoints = { Targaryen: 0, Stark: 0, Lannister: 0 };
   if (config.manual_points && typeof config.manual_points === 'object') {
     for (const q of SQN) {
@@ -82,7 +83,8 @@ async function payload(db) {
   }
 
   const board = getLeaderboardData({ results, isManualLeaderboard: config.is_manual, manualPoints: cleanManualPoints });
-  return { success: true, results, ...board, SQ, SQN };
+  const pointTableLogs = await getPointTableLogs(db, 20);
+  return { success: true, results, ...board, SQ, SQN, pointTableLogs };
 }
 export async function GET() {
   try { return NextResponse.json(await payload(getSupabase())); }
@@ -100,13 +102,57 @@ export async function POST(req) {
         points[squad] = value;
       }
       const cur = await db.from('leaderboard_settings').select('manual_points').eq('id', 1).single();
-      if (cur.data?.manual_points?._extra_events) {
-        points._extra_events = cur.data.manual_points._extra_events;
+      const prevPoints = cur.data?.manual_points || {};
+      if (prevPoints._extra_events) {
+        points._extra_events = prevPoints._extra_events;
+      }
+      if (prevPoints._audit_logs) {
+        points._audit_logs = prevPoints._audit_logs;
       }
       checked(await db.from('leaderboard_settings').update({ manual_points: points, is_manual: true }).eq('id', 1).select().single());
+
+      // Audit Log for manual point changes
+      const diffs = {};
+      const diffSummaries = [];
+      for (const squad of SQN) {
+        const prevVal = Number(prevPoints[squad]) || 0;
+        const nextVal = Number(points[squad]) || 0;
+        const diff = nextVal - prevVal;
+        diffs[squad] = diff;
+        diffSummaries.push(`${squad}: ${prevVal} ➔ ${nextVal} (${diff >= 0 ? '+' : ''}${diff})`);
+      }
+      const adminEmail = db.adminUser?.email || 'Admin';
+      await recordAuditLog(db, {
+        action: 'POINTS_MANUAL_OVERRIDE',
+        entityType: 'leaderboard',
+        entityName: 'Point Table',
+        summary: `Manual scores adjusted by ${adminEmail} [${diffSummaries.join(', ')}]`,
+        details: {
+          previousPoints: { Targaryen: prevPoints.Targaryen || 0, Stark: prevPoints.Stark || 0, Lannister: prevPoints.Lannister || 0 },
+          newPoints: { Targaryen: points.Targaryen || 0, Stark: points.Stark || 0, Lannister: points.Lannister || 0 },
+          diffs,
+        },
+        req,
+      });
     } else if (['reset_to_auto', 'recalculate', 'toggle_mode'].includes(body.action)) {
-      checked(await db.from('leaderboard_settings').update({ is_manual: body.action === 'toggle_mode' ? body.isManual === true : false }).eq('id', 1).select().single());
+      const cur = await db.from('leaderboard_settings').select('manual_points').eq('id', 1).single();
+      const isManual = body.action === 'toggle_mode' ? body.isManual === true : false;
+      checked(await db.from('leaderboard_settings').update({ is_manual: isManual }).eq('id', 1).select().single());
+
+      const adminEmail = db.adminUser?.email || 'Admin';
+      await recordAuditLog(db, {
+        action: 'POINTS_RESET_AUTO',
+        entityType: 'leaderboard',
+        entityName: 'Point Table',
+        summary: `Leaderboard reset to automatic calculation by ${adminEmail}`,
+        details: {
+          action: body.action,
+          previousManualPoints: cur.data?.manual_points || {},
+        },
+        req,
+      });
     } else {
+
       if (body.action) throw new ApiError('Unknown action.');
       if (!Array.isArray(body.winners) || body.winners.length === 0 || body.winners.length > 6) {
         throw new ApiError('Provide winners for the event (1st place is mandatory).');
@@ -255,7 +301,30 @@ export async function POST(req) {
         if (updateRes.error) checked(updateRes);
         throw new ApiError('Event not found: ' + targetName, 404);
       }
+
+      // Record audit log for published winners
+      const adminEmail = db.adminUser?.email || 'Admin';
+      const winnerSummaries = winners.map(w => `#${w.place} ${w.n} (${w.d}/S${w.s} - ${w.q})`).join(', ');
+      await recordAuditLog(db, {
+        action: 'EVENT_WINNERS_SAVED',
+        entityType: 'results',
+        entityName: targetName,
+        summary: `Published winners for ${targetName} (${isGroup ? 'Group Program' : 'Individual'}) by ${adminEmail}: ${winnerSummaries}`,
+        details: {
+          eventName: targetName,
+          isGroup,
+          winners: winners.map(w => ({
+            place: w.place,
+            name: w.n,
+            dept: w.d,
+            sem: w.s,
+            squad: w.q,
+          })),
+        },
+        req,
+      });
     }
     return NextResponse.json(await payload(db));
   } catch (error) { return failure(error); }
 }
+

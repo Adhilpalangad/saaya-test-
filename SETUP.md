@@ -10,12 +10,19 @@ The application uses Supabase for event statuses, published winners, leaderboard
 4. Copy that user's UUID and run this in SQL Editor:
 
 ```sql
-insert into public.admins (user_id)
-values ('YOUR-AUTH-USER-UUID')
-on conflict do nothing;
+-- To add as Super Administrator:
+insert into public.admins (user_id, role, email)
+values ('YOUR-AUTH-USER-UUID', 'super_admin', 'your-admin@email.com')
+on conflict (user_id) do update set role = 'super_admin', email = excluded.email;
+
+-- Or to add as regular Administrator:
+insert into public.admins (user_id, role, email)
+values ('YOUR-AUTH-USER-UUID', 'admin', 'your-admin@email.com')
+on conflict (user_id) do update set role = 'admin', email = excluded.email;
 ```
 
-An authenticated account only becomes an administrator when explicitly added to this table. Public users cannot add themselves. No service-role key is needed by the application.
+An authenticated account only becomes an administrator when explicitly added to this table. Public users cannot add themselves. Super Administrators have access to the Super Admin Suite, Audit Logs Explorer, Admin User Privileges, and Emergency Lockdown. No service-role key is needed by the application.
+
 
 ## Local development
 

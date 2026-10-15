@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { randomUUID } from 'node:crypto';
 
-const context = vm.createContext({ console, process, fetch, Response });
+const context = vm.createContext({ console, process, fetch, Response, URL });
 const modules = new Map();
 let currentDb;
 const synthetic = (exports) => new vm.SyntheticModule(Object.keys(exports), function () {
@@ -120,24 +120,29 @@ test('gallery rejects arbitrary assets before contacting Cloudinary', async () =
   assert.equal((await POST(request({ public_id: 'other/photo', cap: 'Photo', y: 2026 }))).status, 400);
 });
 
-function savedDataDb() {
+function savedDataDb(role = 'admin') {
   const records = {
-    admins: [{ user_id: 'admin-id' }],
+    admins: [{ user_id: 'admin-id', role, email: 'admin@saaya.fest' }],
     events: [
       { name: 'Oppana', category: 'On Stage', status: 'upcoming', sort_order: 0, winners: [] },
       { name: 'Mappila Paatu', category: 'Pre Stage', status: 'upcoming', sort_order: 30, winners: [] },
     ],
     leaderboard_settings: [{ id: 1, is_manual: false, manual_points: { Targaryen: 0, Stark: 0, Lannister: 0 } }],
     gallery: [],
+    audit_logs: [],
+    system_settings: [{ id: 1, is_locked_down: false, lockdown_reason: null }],
   };
   return {
-    auth: { getUser: async () => ({ data: { user: { id: 'admin-id' } }, error: null }) },
+    records,
+    auth: { getUser: async () => ({ data: { user: { id: 'admin-id', email: 'admin@saaya.fest' } }, error: null }) },
     from(table) {
+      if (!records[table]) records[table] = [];
       let values, filter;
       const execute = () => {
         const rows = records[table].filter(row => {
           if (!filter) return true;
           if (filter.type === 'eq') return row[filter.col] === filter.val;
+          if (filter.type === 'neq') return row[filter.col] !== filter.val;
           if (filter.type === 'in') return filter.val.includes(row[filter.col]);
           return true;
         });
@@ -148,7 +153,23 @@ function savedDataDb() {
         select: () => query,
         update: next => { values = next; return query; },
         insert: next => { records[table].push(next); return query; },
+        upsert: next => {
+          const idx = records[table].findIndex(r => r.id === next.id);
+          if (idx >= 0) Object.assign(records[table][idx], next);
+          else records[table].push(next);
+          return query;
+        },
+        delete: () => {
+          records[table] = records[table].filter(row => {
+            if (!filter) return false;
+            if (filter.type === 'eq') return row[filter.col] !== filter.val;
+            if (filter.type === 'neq') return row[filter.col] === filter.val;
+            return false;
+          });
+          return query;
+        },
         eq: (col, val) => { filter = { type: 'eq', col, val }; return query; },
+        neq: (col, val) => { filter = { type: 'neq', col, val }; return query; },
         in: (col, val) => { filter = { type: 'in', col, val }; return query; },
         order: async () => execute(),
         single: async () => ({ data: execute().data[0], error: null }),
@@ -159,6 +180,7 @@ function savedDataDb() {
     },
   };
 }
+
 test('published winners update the public leaderboard; manual override and reset remain consistent', async () => {
   currentDb = savedDataDb();
   const { GET, POST } = await exportsOf('app/api/results/route.js');
@@ -454,6 +476,128 @@ test('supports tied 1st and tied 2nd place winners with same points without divi
   const readGroup = readBody.results.find(r => r.n === 'Group Song');
   assert.equal(readGroup.p.length, 5);
 });
+
+test('GET /api/auth returns user metadata and super admin flag', async () => {
+  // Regular Admin
+  currentDb = savedDataDb('admin');
+  const { GET } = await exportsOf('app/api/auth/route.js');
+  const res = await GET(new Request('http://localhost/api/auth', { headers: { Authorization: 'Bearer test' } }));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.success, true);
+  assert.equal(body.user.role, 'admin');
+  assert.equal(body.user.isSuperAdmin, false);
+
+  // Super Admin
+  currentDb = savedDataDb('super_admin');
+  const resSuper = await GET(new Request('http://localhost/api/auth', { headers: { Authorization: 'Bearer test' } }));
+  assert.equal(resSuper.status, 200);
+  const bodySuper = await resSuper.json();
+  assert.equal(bodySuper.user.role, 'super_admin');
+  assert.equal(bodySuper.user.isSuperAdmin, true);
+});
+
+test('manual points changes and auto resets generate audit logs with squad score diffs', async () => {
+  const db = savedDataDb('super_admin');
+  currentDb = db;
+  const { POST } = await exportsOf('app/api/results/route.js');
+
+  // Manual score adjustment
+  const res1 = await POST(request({
+    action: 'set_manual_points',
+    points: { Targaryen: 50, Stark: 40, Lannister: 30 },
+  }));
+  assert.equal(res1.status, 200);
+
+  // Verify audit log exists
+  const logs = db.records.audit_logs;
+  assert.ok(logs.length >= 1, 'Should record at least one audit log');
+  const pointLog = logs.find(l => l.action_type === 'POINTS_MANUAL_OVERRIDE');
+  assert.ok(pointLog, 'Must record POINTS_MANUAL_OVERRIDE log');
+  assert.equal(pointLog.admin_email, 'admin@saaya.fest');
+  assert.equal(pointLog.details.newPoints.Targaryen, 50);
+  assert.equal(pointLog.details.diffs.Targaryen, 50);
+
+  // Auto reset
+  const res2 = await POST(request({ action: 'reset_to_auto' }));
+  assert.equal(res2.status, 200);
+  const resetLog = logs.find(l => l.action_type === 'POINTS_RESET_AUTO');
+  assert.ok(resetLog, 'Must record POINTS_RESET_AUTO log');
+});
+
+test('event status changes generate audit logs', async () => {
+  const db = savedDataDb('admin');
+  currentDb = db;
+  const { POST } = await exportsOf('app/api/events/route.js');
+
+  const res = await POST(request({ eventName: 'Oppana', status: 'live' }));
+  assert.equal(res.status, 200);
+
+  const logs = db.records.audit_logs;
+  const eventLog = logs.find(l => l.action_type === 'EVENT_STATUS_CHANGE');
+  assert.ok(eventLog, 'Must record EVENT_STATUS_CHANGE log');
+  assert.equal(eventLog.entity_name, 'Oppana');
+  assert.equal(eventLog.details.status, 'live');
+});
+
+test('GET /api/logs retrieves logs and supports filtering', async () => {
+  const db = savedDataDb('super_admin');
+  currentDb = db;
+  // Seed some logs
+  db.records.audit_logs.push(
+    { action_type: 'POINTS_MANUAL_OVERRIDE', admin_email: 'admin@saaya.fest', summary: 'Point override', created_at: new Date().toISOString() },
+    { action_type: 'EVENT_STATUS_CHANGE', admin_email: 'admin@saaya.fest', summary: 'Event status change', created_at: new Date().toISOString() }
+  );
+
+  const { GET } = await exportsOf('app/api/logs/route.js');
+
+  // Query all
+  const reqAll = new Request('http://localhost/api/logs?category=all', { headers: { Authorization: 'Bearer test' } });
+  const resAll = await (await GET(reqAll)).json();
+  assert.equal(resAll.success, true);
+  assert.ok(resAll.logs.length >= 2);
+
+  // Query points only
+  const reqPoints = new Request('http://localhost/api/logs?category=points', { headers: { Authorization: 'Bearer test' } });
+  const resPoints = await (await GET(reqPoints)).json();
+  assert.equal(resPoints.success, true);
+  assert.ok(resPoints.logs.every(l => l.action_type.startsWith('POINTS_')));
+});
+
+test('Super Admin admin management restricts regular admins and allows super admins', async () => {
+  // Regular Admin is rejected
+  currentDb = savedDataDb('admin');
+  const { GET: getAdmins, POST: postAdmins } = await exportsOf('app/api/super-admin/admins/route.js');
+  const forbiddenRes = await postAdmins(request({ action: 'update_role', userId: 'user-2', role: 'super_admin' }));
+  assert.equal(forbiddenRes.status, 403, 'Regular admin must be rejected from modifying admin roles');
+
+  // Super Admin can list and update
+  const superDb = savedDataDb('super_admin');
+  superDb.records.admins.push({ user_id: 'user-2', role: 'admin', email: 'user2@saaya.fest' });
+  currentDb = superDb;
+
+  const listRes = await (await getAdmins(new Request('http://localhost', { headers: { Authorization: 'Bearer test' } }))).json();
+  assert.equal(listRes.success, true);
+  assert.equal(listRes.admins.length, 2);
+
+  const updateRes = await (await postAdmins(request({ action: 'update_role', userId: 'user-2', role: 'super_admin' }))).json();
+  assert.equal(updateRes.success, true);
+  assert.equal(superDb.records.admins.find(a => a.user_id === 'user-2').role, 'super_admin');
+});
+
+test('Super Admin can toggle emergency lockdown mode', async () => {
+  currentDb = savedDataDb('super_admin');
+  const { GET, POST } = await exportsOf('app/api/super-admin/system/route.js');
+
+  const postRes = await (await POST(request({ isLockedDown: true, reason: 'Final results review' }))).json();
+  assert.equal(postRes.success, true);
+  assert.equal(postRes.isLockedDown, true);
+
+  const getRes = await (await GET()).json();
+  assert.equal(getRes.isLockedDown, true);
+  assert.equal(getRes.reason, 'Final results review');
+});
+
 
 
 
