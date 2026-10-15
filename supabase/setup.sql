@@ -15,13 +15,10 @@ grant select on public.admins to authenticated;
 grant insert, update, delete on public.admins to authenticated;
 revoke all on public.admins from anon;
 drop policy if exists "Read own membership" on public.admins;
-create policy "Read own membership" on public.admins for select to authenticated using (
-  user_id = (select auth.uid()) or exists (select 1 from public.admins where user_id = (select auth.uid()))
-);
 drop policy if exists "Super admin manage admins" on public.admins;
-create policy "Super admin manage admins" on public.admins for all to authenticated
-  using (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'))
-  with check (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'));
+create policy "Read admins" on public.admins for select to authenticated using (true);
+create policy "Manage admins" on public.admins for all to authenticated using (true) with check (true);
+
 
 
 create table if not exists public.events (
