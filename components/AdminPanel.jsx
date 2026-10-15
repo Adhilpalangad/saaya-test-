@@ -64,15 +64,25 @@ export default function AdminPanel() {
         const body = await res.json();
         if (active) {
           setAuth(res.ok);
-          if (res.ok && body.user) setCurrentUser(body.user);
-          if (!res.ok) setAuthError(body.error);
+          if (res.ok && body.user) {
+            setCurrentUser(body.user);
+            setAuthError('');
+          } else {
+            // Quietly clear expired background tokens so login screen remains clean
+            if (res.status === 401) {
+              await db.auth.signOut().catch(() => {});
+            } else if (body.error) {
+              setAuthError(body.error);
+            }
+          }
         }
-      } catch { if (active) { setAuth(false); setAuthError('Unable to verify administrator access.'); } }
+      } catch { if (active) { setAuth(false); } }
     };
-    db.auth.getSession().then(({ data }) => verify(data.session)).catch(() => { if (active) setAuthError('Unable to restore your session.'); });
+    db.auth.getSession().then(({ data }) => verify(data.session)).catch(() => { if (active) setAuth(false); });
     const { data: { subscription } } = db.auth.onAuthStateChange((_event, session) => { setTimeout(() => { if (active) verify(session); }, 0); });
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
+
 
 
   const showToast = (msg) => {
