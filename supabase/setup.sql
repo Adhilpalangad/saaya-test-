@@ -153,6 +153,33 @@ create policy "Super admin edit system settings" on public.system_settings for u
   using (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'))
   with check (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'));
 
+-- Super Admin Custom Events table
+create table if not exists public.custom_events (
+  name text primary key,
+  category text not null default 'Special Event',
+  sort_order integer not null default 999,
+  is_group boolean not null default false,
+  status text not null default 'done' check (status in ('upcoming','live','done')),
+  time text default null,
+  venue text default null,
+  day integer default null,
+  winners jsonb not null default '[]'::jsonb,
+  created_by text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.custom_events enable row level security;
+grant select on public.custom_events to anon, authenticated;
+grant insert, update, delete on public.custom_events to authenticated;
+
+drop policy if exists "Public view custom events" on public.custom_events;
+create policy "Public view custom events" on public.custom_events for select using (true);
+drop policy if exists "Super admin manage custom events" on public.custom_events;
+create policy "Super admin manage custom events" on public.custom_events for all to authenticated
+  using (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'))
+  with check (exists (select 1 from public.admins where user_id = (select auth.uid()) and role = 'super_admin'));
+
 commit;
 
 

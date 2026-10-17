@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { adminFetch } from '../lib/admin-fetch';
 import { EV, SQ, SQN } from '../lib/data';
 
@@ -367,6 +368,19 @@ export default function SuperAdminCenter({ currentUser, showToast }) {
         >
           🔒 Emergency Controls
         </button>
+        <Link
+          href="/admin/custom-events"
+          className="spa-subtab"
+          style={{
+            textDecoration: 'none',
+            background: 'rgba(245, 158, 11, 0.12)',
+            color: '#fbbf24',
+            borderColor: 'rgba(245, 158, 11, 0.35)',
+            fontWeight: 700,
+          }}
+        >
+          ✨ Custom Events Studio &rarr;
+        </Link>
       </div>
 
       {/* ===================== SUBTAB 1: AUDIT LOGS EXPLORER ===================== */}

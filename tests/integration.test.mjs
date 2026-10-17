@@ -154,7 +154,7 @@ function savedDataDb(role = 'admin') {
         update: next => { values = next; return query; },
         insert: next => { records[table].push(next); return query; },
         upsert: next => {
-          const idx = records[table].findIndex(r => r.id === next.id);
+          const idx = records[table].findIndex(r => (next.name ? r.name === next.name : r.id === next.id));
           if (idx >= 0) Object.assign(records[table][idx], next);
           else records[table].push(next);
           return query;
@@ -597,6 +597,95 @@ test('Super Admin can toggle emergency lockdown mode', async () => {
   assert.equal(getRes.isLockedDown, true);
   assert.equal(getRes.reason, 'Final results review');
 });
+
+test('Super Admin Custom Events: RBAC rejects unauthenticated and regular admins', async () => {
+  const { GET, POST } = await exportsOf('app/api/super-admin/custom-events/route.js');
+
+  // Unauthenticated -> 401
+  currentDb = undefined;
+  assert.equal((await GET(new Request('http://localhost'))).status, 401);
+  assert.equal((await POST(new Request('http://localhost', { method: 'POST' }))).status, 401);
+
+  // Regular Admin -> 403
+  currentDb = savedDataDb('admin');
+  const getForbidden = await GET(new Request('http://localhost', { headers: { Authorization: 'Bearer test' } }));
+  assert.equal(getForbidden.status, 403, 'Regular admin must be denied access to custom events');
+
+  const postForbidden = await POST(request({ action: 'save', name: 'Unauthorized Event' }));
+  assert.equal(postForbidden.status, 403, 'Regular admin must be denied from saving custom events');
+});
+
+test('Super Admin can create, list, and delete custom events with mandatory 1st place and leaderboard integration', async () => {
+  currentDb = savedDataDb('super_admin');
+  const { GET: getCustomEvents, POST: postCustomEvent } = await exportsOf('app/api/super-admin/custom-events/route.js');
+  const { GET: getResults } = await exportsOf('app/api/results/route.js');
+
+  // 1. Validation: 1st place is mandatory
+  const missingFirstRes = await postCustomEvent(request({
+    action: 'save',
+    name: 'Hackathon 2026',
+    category: 'Special Event',
+    isGroup: true,
+    winners: [
+      { n: '', d: 'CSE', s: 4, place: 1 },
+      { n: 'Team Beta', d: 'ME', s: 4, place: 2 },
+    ],
+  }));
+  assert.equal(missingFirstRes.status, 400, 'Must reject custom event if 1st place winner is empty');
+
+  // 2. Success: Save custom event with 1st place (mandatory) and 2nd place (optional 3rd left blank)
+  const saveRes = await postCustomEvent(request({
+    action: 'save',
+    name: 'Hackathon 2026',
+    category: 'Special Event',
+    isGroup: true,
+    winners: [
+      { n: 'Cyber Knights', d: 'CSE', s: 6, place: 1, pts: 10 },
+      { n: 'Gearheads', d: 'ME', s: 4, place: 2, pts: 5 },
+      { n: '', d: 'EEE', s: 4, place: 3 }, // empty 3rd place is optional
+    ],
+  }));
+  assert.equal(saveRes.status, 200);
+  const saveBody = await saveRes.json();
+  assert.equal(saveBody.success, true);
+
+  // 3. GET /api/super-admin/custom-events returns the new event
+  const listRes = await (await getCustomEvents(new Request('http://localhost', { headers: { Authorization: 'Bearer test' } }))).json();
+  assert.equal(listRes.success, true);
+  const found = listRes.customEvents.find(e => e.name === 'Hackathon 2026');
+  assert.ok(found, 'Custom event must be returned in custom events list');
+  assert.equal(found.isGroup, true);
+  assert.equal(found.category, 'Special Event');
+
+  // 4. Public /api/results reflects the custom event and updates leaderboard points
+  const resultsBody = await (await getResults()).json();
+  const resEvent = resultsBody.results.find(r => r.n === 'Hackathon 2026');
+  assert.ok(resEvent, 'Custom event must appear in public results');
+  // Cyber Knights (CSE -> Lannister: 10 pts), Gearheads (ME -> Targaryen: 5 pts)
+  assert.equal(resultsBody.points.Lannister, 10);
+  assert.equal(resultsBody.points.Targaryen, 5);
+
+  // 5. Audit log generated for custom event creation
+  const { GET: getLogs } = await exportsOf('app/api/logs/route.js');
+  const logsRes = await (await getLogs(new Request('http://localhost/api/logs?category=all', { headers: { Authorization: 'Bearer test' } }))).json();
+  assert.ok(logsRes.logs.some(l => l.action_type === 'CUSTOM_EVENT_CREATED' && l.entity_name === 'Hackathon 2026'));
+
+  // 6. Delete custom event removes it and updates scores
+  const deleteRes = await postCustomEvent(request({
+    action: 'delete',
+    name: 'Hackathon 2026',
+  }));
+  assert.equal(deleteRes.status, 200);
+  const deleteBody = await deleteRes.json();
+  assert.equal(deleteBody.success, true);
+  assert.ok(!deleteBody.customEvents.some(e => e.name === 'Hackathon 2026'));
+
+  // Leaderboard points revert
+  const afterDeleteResults = await (await getResults()).json();
+  assert.equal(afterDeleteResults.points.Lannister, 0);
+  assert.equal(afterDeleteResults.points.Targaryen, 0);
+});
+
 
 
 
