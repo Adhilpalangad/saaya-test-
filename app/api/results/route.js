@@ -14,9 +14,9 @@ async function payload(db) {
   const config = checked(settings);
   const dbEvents = checked(events);
 
-  // Merge extra events stored in leaderboard_settings fallback (e.g. when RLS blocks table insert)
+  // Merge extra events and custom events stored in leaderboard_settings fallback
   const extraEventsMap = (config.manual_points && typeof config.manual_points === 'object')
-    ? (config.manual_points._extra_events || {})
+    ? { ...(config.manual_points._extra_events || {}), ...(config.manual_points._custom_events || {}) }
     : {};
 
   const mergedEvents = [...dbEvents];
@@ -24,9 +24,9 @@ async function payload(db) {
     if (!mergedEvents.some(e => e.name === eName)) {
       mergedEvents.push({
         name: eName,
-        category: eData.category || 'Pre Stage',
+        category: eData.category || 'Special Event',
         winners: eData.winners || [],
-        is_group: Boolean(eData.isGroup),
+        is_group: Boolean(eData.isGroup || eData.is_group),
       });
     }
   }
@@ -47,6 +47,7 @@ async function payload(db) {
             q: w.q,
             place,
             isGroup,
+            pts: typeof w.pts === 'number' ? w.pts : undefined,
           });
           const tiedList = Array.isArray(w.tied) ? w.tied : (w.tied ? [w.tied] : []);
           for (const t of tiedList) {
@@ -58,6 +59,7 @@ async function payload(db) {
                 q: t.q,
                 place: typeof t.place === 'number' ? t.place : place,
                 isGroup,
+                pts: typeof t.pts === 'number' ? t.pts : (typeof w.pts === 'number' ? w.pts : undefined),
               });
             }
           }
@@ -108,6 +110,9 @@ export async function POST(req) {
       }
       if (prevPoints._audit_logs) {
         points._audit_logs = prevPoints._audit_logs;
+      }
+      if (prevPoints._custom_events) {
+        points._custom_events = prevPoints._custom_events;
       }
       checked(await db.from('leaderboard_settings').update({ manual_points: points, is_manual: true }).eq('id', 1).select().single());
 

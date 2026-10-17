@@ -528,13 +528,22 @@ export default function AdminPanel() {
         </div>
         <div className="adm-head-actions">
           {currentUser?.isSuperAdmin && (
-            <button
-              type="button"
-              className={`adm-super-btn ${tab === 'super_admin' ? 'active' : ''}`}
-              onClick={() => setTab('super_admin')}
-            >
-              👑 Super Admin Suite
-            </button>
+            <>
+              <Link
+                href="/admin/custom-events"
+                className="adm-super-btn"
+                style={{ textDecoration: 'none', background: 'rgba(245, 158, 11, 0.12)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24' }}
+              >
+                ✨ Custom Events
+              </Link>
+              <button
+                type="button"
+                className={`adm-super-btn ${tab === 'super_admin' ? 'active' : ''}`}
+                onClick={() => setTab('super_admin')}
+              >
+                👑 Super Admin Suite
+              </button>
+            </>
           )}
           <Link href="/events" className="adm-view-btn" target="_blank">View Live Events &rarr;</Link>
           <button onClick={handleLogout} className="adm-logout-btn">Log Out</button>
